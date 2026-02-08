@@ -1161,7 +1161,7 @@ const App = {
         const clientDelays = {};
         data.forEach(t => {
             const client = t.razao_social_cliente || 'N/A';
-            const status = (t.status_tarefa || '').toLowerCase();
+            const status = (t.status_real || '').toLowerCase(); // FIX: Use status_real
             const isDelayed = status.includes('bloq') || status.includes('atras') || status.includes('risco');
 
             if (isDelayed) {
@@ -1284,7 +1284,7 @@ const App = {
                                                     ` : '<span class="text-slate-400 italic">Gargalo operacional</span>'}
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
-                                                    <button onclick="App.setView('company', { spe: '${this.escapeAttr(s.razao_social_da_spe)}' })" 
+                                                    <button onclick="App.filterPendenciasAndGo('${this.escapeAttr(s.razao_social_da_spe)}')" 
                                                             class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center justify-center ml-auto">
                                                         <i class="fa-solid fa-eye text-xs"></i>
                                                     </button>
@@ -3160,9 +3160,15 @@ const App = {
     },
 
     // Navegação
-    setView(view) {
+    setView(view, params = {}) {
         this.state.currentView = view;
+        this.state.routeParams = params;
         this.render();
+    },
+
+    filterPendenciasAndGo(speName) {
+        this.state.filterPendenciasSpe = speName;
+        this.setView('pendencias');
     },
     navMonth(dir) {
         if (dir === 0) {
