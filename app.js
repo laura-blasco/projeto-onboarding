@@ -473,6 +473,7 @@ const App = {
                 this.renderCarteira(container);
                 break;
             case 'operacao':
+            case 'company':
                 this.renderOperacao(container);
                 break;
             case 'overview':
@@ -486,9 +487,6 @@ const App = {
                 break;
             case 'pendencias':
                 this.renderPendencias(container);
-                break;
-            case 'company':
-                this.renderCompanyDrilldown(container);
                 break;
             case 'calendario':
                 this.renderCalendar(container);
@@ -653,10 +651,8 @@ const App = {
     // ============================================================
 
     openSpeDetail(speName) {
-        this.state.activeSpeName = speName;
         this.state.activeTab = 'diario';
-        this.state.currentView = 'operacao';
-        this.render();
+        this.setView('company', { spe: speName });
     },
 
     closeSpeDetail() {
@@ -671,7 +667,7 @@ const App = {
     },
 
     renderOperacao(container) {
-        const speName = this.state.activeSpeName;
+        const speName = this.state.routeParams.spe;
         if (!speName) {
             this.closeSpeDetail();
             return;
@@ -882,7 +878,7 @@ const App = {
             const completedTasks = tasks.filter(t => t.is_done).length;
             const delayedTasks = tasks.filter(t => t.is_delayed && !t.is_done).length;
             const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-            const isExpanded = this.state.expandedItems[`wf_${esteiraName}`] !== false;
+            const isExpanded = this.state.expandedItems[`wf_${esteiraName}`] === true; // Default collapsed
             const esteiraKey = this.escapeAttr(esteiraName);
 
             return `
@@ -3156,7 +3152,7 @@ const App = {
     toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); },
     toggleAccordion(id) {
         this.state.expandedItems[id] = !this.state.expandedItems[id];
-        this.renderDashboard(document.getElementById('app-content'));
+        this.render();
     },
 
     // Navegação
