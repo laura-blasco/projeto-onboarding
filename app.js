@@ -816,26 +816,40 @@ const App = {
             `;
         }
 
+        const isDailyAction = item.type === 'DAILY_ACTION';
         const typeConfig = {
             'reuniao': { icon: 'fa-handshake', color: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
             'blocker': { icon: 'fa-exclamation-triangle', color: 'bg-red-500', badge: 'bg-red-100 text-red-700' },
             'observacao': { icon: 'fa-sticky-note', color: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700' },
-            'marco': { icon: 'fa-flag-checkered', color: 'bg-green-500', badge: 'bg-green-100 text-green-700' }
+            'marco': { icon: 'fa-flag-checkered', color: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
+            'DAILY_ACTION': { icon: 'fa-tasks', color: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-700' }
         };
-        const config = typeConfig[item.entryType] || typeConfig['observacao'];
+        const config = typeConfig[isDailyAction ? 'DAILY_ACTION' : (item.entryType || 'observacao')] || typeConfig['observacao'];
 
         return `
-            <div class="timeline-entry">
+            <div class="timeline-entry ${isDailyAction ? 'action-entry' : ''}">
                 <div class="timeline-icon ${config.color}"><i class="fa-solid ${config.icon}"></i></div>
                 <div class="timeline-body">
                     <div class="timeline-header">
-                        <span class="timeline-badge ${config.badge}">${item.entryType || 'Registro'}</span>
+                        <span class="timeline-badge ${config.badge}">${isDailyAction ? 'Pendência Daily' : (item.entryType || 'Registro')}</span>
                         <span class="timeline-date">${WorkingHoursEngine.formatDate(item.date)}</span>
                         <button onclick="App.deleteJournalEntry('${this.escapeAttr(speName)}', ${item.id})" class="timeline-delete" title="Excluir">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
-                    <p class="timeline-text">${this.escapeHtml(item.text)}</p>
+                    <div class="timeline-content-wrapper shadow-sm">
+                        ${isDailyAction ? `
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${this.getEsteiraColorClass(item.esteira)} uppercase">${item.esteira}</span>
+                                <span class="text-[9px] font-medium text-slate-400">Resp: <strong>${this.escapeHtml(item.responsavel)}</strong></span>
+                                ${item.prazo ? `<span class="text-[9px] font-bold bg-slate-100 px-1.5 py-0.5 rounded text-slate-500"><i class="fa-solid fa-calendar-day mr-1"></i>${WorkingHoursEngine.formatDate(item.prazo)}</span>` : ''}
+                                <span class="ml-auto text-[10px] font-bold ${item.status === 'done' ? 'text-emerald-500' : 'text-amber-500'}">
+                                    ${item.status === 'done' ? '<i class="fa-solid fa-check"></i> Concluído' : '<i class="fa-solid fa-clock"></i> Pendente'}
+                                </span>
+                            </div>
+                        ` : ''}
+                        <p class="timeline-text ${isDailyAction && item.status === 'done' ? 'line-through opacity-50' : ''}">${this.escapeHtml(item.text)}</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -1779,21 +1793,53 @@ const App = {
                     
                     <div class="flex flex-col">
                         <h5 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase mb-3">
-                            <i class="fa-solid fa-pen-to-square text-indigo-500 text-xs"></i> Registro de Decisão / Daily Log
+                            <i class="fa-solid fa-list-check text-indigo-500 text-xs"></i> Ações da Daily / Pendências do Dia
                         </h5>
-                        <div class="flex flex-col gap-3 flex-1">
-                            <textarea 
-                                id="daily-note-${this.escapeAttr(spe.name)}"
-                                class="w-full text-xs border border-slate-200 rounded-lg p-3 h-28 focus:ring-2 focus:ring-indigo-500 outline-none resize-none shadow-inner bg-slate-50/20"
-                                placeholder="Registre aqui as decisões acordadas na daily, próximos passos críticos ou alinhamentos para resolução..."
-                            >${lastNote ? this.escapeHtml(lastNote.text) : ''}</textarea>
-                            <button 
-                                id="btn-save-daily-${this.escapeAttr(spe.name)}"
-                                onclick="App.saveDailyLog('${this.escapeAttr(spe.name)}')"
-                                class="u-btn u-btn-primary self-end py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider shadow-md active:scale-95 transition-transform"
-                            >
-                                <i class="fa-solid fa-save mr-1"></i> Salvar Registro
-                            </button>
+                        
+                        <!-- Action List -->
+                        <div class="flex-1 overflow-y-auto max-h-48 mb-4 space-y-2 pr-1 custom-scrollbar">
+                            ${(this.state.journals[spe.name] || [])
+                .filter(j => j.type === 'DAILY_ACTION')
+                .sort((a, b) => (a.status === 'done' ? 1 : -1))
+                .map(action => `
+                                    <div class="group flex items-start gap-3 p-2 rounded-lg border ${action.status === 'done' ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 shadow-sm'} transition-all">
+                                        <button onclick="App.toggleDailyAction('${this.escapeAttr(spe.name)}', ${action.id})" class="mt-0.5 w-4 h-4 rounded border ${action.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'} flex items-center justify-center transition-colors">
+                                            ${action.status === 'done' ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                                        </button>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-0.5">
+                                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${this.getEsteiraColorClass(action.esteira)} uppercase">${action.esteira}</span>
+                                                <span class="text-[9px] font-medium text-slate-400">@${this.escapeHtml(action.responsavel)}</span>
+                                                ${action.prazo ? `<span class="text-[9px] font-bold bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 ml-auto"><i class="fa-solid fa-calendar-day mr-1"></i>${WorkingHoursEngine.formatDate(action.prazo)}</span>` : ''}
+                                            </div>
+                                            <p class="text-xs text-slate-700 leading-tight ${action.status === 'done' ? 'line-through' : ''}">${this.escapeHtml(action.text)}</p>
+                                        </div>
+                                        <button onclick="App.deleteDailyAction('${this.escapeAttr(spe.name)}', ${action.id})" class="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-rose-500 transition-all">
+                                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                `).join('') || '<div class="text-center py-6 text-slate-300 italic text-xs">Nenhuma ação registrada hoje.</div>'}
+                        </div>
+
+                        <!-- Add Action Form -->
+                        <div class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50">
+                            <div class="grid grid-cols-3 gap-2 mb-2">
+                                <select id="action-esteira-${this.escapeAttr(spe.name)}" class="text-[10px] font-bold border-slate-200 rounded p-1.5 outline-none focus:ring-1 focus:ring-indigo-500">
+                                    ${sortedEsteiras.map(e => `<option value="${this.escapeAttr(e.name)}">${this.escapeHtml(e.name)}</option>`).join('')}
+                                    <option value="Geral">Geral</option>
+                                </select>
+                                <input id="action-resp-${this.escapeAttr(spe.name)}" type="text" placeholder="Responsável" class="text-[10px] border-slate-200 rounded p-1.5 outline-none focus:ring-1 focus:ring-indigo-500">
+                                <input id="action-prazo-${this.escapeAttr(spe.name)}" type="date" class="text-[10px] border-slate-200 rounded p-1.5 outline-none focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                            <div class="flex gap-2">
+                                <input id="action-text-${this.escapeAttr(spe.name)}" type="text" placeholder="Descreva a ação ou pendência..." class="flex-1 text-xs border-slate-200 rounded p-2 outline-none focus:ring-1 focus:ring-indigo-500">
+                                <button 
+                                    onclick="App.addDailyAction('${this.escapeAttr(spe.name)}')"
+                                    class="bg-indigo-600 text-white rounded-lg px-3 py-2 text-xs font-bold shadow-sm hover:bg-indigo-700 active:scale-95 transition-all"
+                                >
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1801,33 +1847,56 @@ const App = {
         `;
     },
 
-    saveDailyLog(speName) {
-        const text = document.getElementById(`daily-note-${speName}`).value;
-        const btn = document.getElementById(`btn-save-daily-${speName}`);
+    addDailyAction(speName) {
+        const textEl = document.getElementById(`action-text-${speName}`);
+        const respEl = document.getElementById(`action-resp-${speName}`);
+        const estEl = document.getElementById(`action-esteira-${speName}`);
+        const prazoEl = document.getElementById(`action-prazo-${speName}`);
 
-        if (!text.trim()) {
-            btn.classList.add('shake');
-            setTimeout(() => btn.classList.remove('shake'), 500);
-            return;
-        }
+        if (!textEl.value.trim()) return;
 
         this.saveJournalEntry(speName, {
-            text: text,
-            type: 'DAILY',
-            date: new Date().toISOString().split('T')[0]
+            text: textEl.value,
+            responsavel: respEl.value || 'N/A',
+            esteira: estEl.value,
+            prazo: prazoEl.value || null,
+            type: 'DAILY_ACTION',
+            status: 'todo'
         });
 
-        // Visual Feedback
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvo com Sucesso';
-        btn.classList.remove('u-btn-primary');
-        btn.classList.add('bg-emerald-500', 'text-white');
+        // Clear only the text input to keep the others for next entry
+        textEl.value = '';
+    },
 
-        setTimeout(() => {
-            btn.innerHTML = originalHtml;
-            btn.classList.remove('bg-emerald-500', 'text-white');
-            btn.classList.add('u-btn-primary');
-        }, 2000);
+    toggleDailyAction(speName, actionId) {
+        const actions = this.state.journals[speName] || [];
+        const action = actions.find(a => a.id === actionId);
+        if (action) {
+            action.status = action.status === 'done' ? 'todo' : 'done';
+            localStorage.setItem('trinus_journals', JSON.stringify(this.state.journals));
+            this.render();
+        }
+    },
+
+    deleteDailyAction(speName, actionId) {
+        if (!confirm('Deseja excluir esta ação?')) return;
+        this.state.journals[speName] = this.state.journals[speName].filter(a => a.id !== actionId);
+        localStorage.setItem('trinus_journals', JSON.stringify(this.state.journals));
+        this.render();
+    },
+
+    getEsteiraColorClass(name) {
+        // Map common names to tailwind classes for the action badges
+        const mapping = {
+            'comercial': 'bg-indigo-50 text-indigo-600 border-indigo-100',
+            'financeiro': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+            'jurídico': 'bg-amber-50 text-amber-600 border-amber-100',
+            'viabilidade': 'bg-rose-50 text-rose-600 border-rose-100',
+            'infra': 'bg-sky-50 text-sky-600 border-sky-100',
+            'geral': 'bg-slate-50 text-slate-600 border-slate-100'
+        };
+        const key = (name || '').toLowerCase();
+        return mapping[key] || mapping['geral'];
     },
 
 
