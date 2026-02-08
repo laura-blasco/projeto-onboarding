@@ -1108,71 +1108,189 @@ const App = {
     // --- VIEW: VISÃO GERAL (Overview) ---
     renderOverview(container) {
         const data = this.getFilteredData();
-        const totalSPEs = [...new Set(data.map(d => d.razao_social_da_spe))].length;
-        const totalTasks = data.length;
-        const doneTasks = data.filter(d => d.is_done).length;
-        const delayedTasks = data.filter(d => d.is_delayed).length;
-        const pendingTasks = data.filter(d => !d.is_done).length;
-        const slaPercent = totalTasks > 0 ? Math.round(((totalTasks - delayedTasks) / totalTasks) * 100) : 0;
+        const speMap = this.groupBySPE(data);
+        const spes = Object.values(speMap);
 
-        // Status distribution
-        const statusCounts = data.reduce((acc, d) => {
-            const status = d.status_real || 'Não Definido';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {});
+        // Core KPIs
+        const totalOps = spes.length;
+        const inOnboarding = spes.filter(s => (s.status_jornada_cliente || '').toLowerCase().includes('onboarding')).length;
 
-        // Phase distribution
-        const phaseCounts = data.reduce((acc, d) => {
-            const phase = d.fase_da_spe || 'Não Definida';
-            acc[phase] = (acc[phase] || 0) + 1;
-            return acc;
-        }, {});
+        // Critical Pending: SPEs with any blocked task OR overall "Bloqueado" status
+        const withPendencies = spes.filter(s => {
+            const hasBlockedTask = s.tasks.some(t => (t.status_tarefa || '').toLowerCase().includes('bloq'));
+            const isBlockedGlobal = (s.status_jornada_cliente || '').toLowerCase().includes('bloq');
+            return hasBlockedTask || isBlockedGlobal;
+        });
+
+        // Average TTV (using kpi_ttv_dias_corridos from the process level)
+        const ttvArray = spes.map(s => s.kpi_ttv_dias_corridos || 0).filter(v => v > 0);
+        const avgTtv = ttvArray.length > 0 ? Math.round(ttvArray.reduce((as, b) => as + b, 0) / ttvArray.length) : 0;
+
+        // Top 10 Delays by Client
+        // Aggregate delays (or risk status) per client
+        const clientDelays = {};
+        data.forEach(t => {
+            const client = t.razao_social_cliente || 'N/A';
+            const status = (t.status_tarefa || '').toLowerCase();
+            const isDelayed = status.includes('bloq') || status.includes('atras') || status.includes('risco');
+
+            if (isDelayed) {
+                if (!clientDelays[client]) clientDelays[client] = { name: client, count: 0, spes: new Set() };
+                clientDelays[client].count++;
+                clientDelays[client].spes.add(t.razao_social_da_spe);
+            }
+        });
+        const top10Clients = Object.values(clientDelays)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+
+        // External Causes (Client Pending)
+        const clientPendingTasks = data.filter(t =>
+            (t.status_tarefa || '').toLowerCase().includes('bloq') &&
+            (t.causa_bloqueio || '').toLowerCase().includes('cliente')
+        );
 
         container.innerHTML = `
-            <div class="fade-in">
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="kpi-card bg-gradient-to-br from-blue-500 to-blue-600">
-                        <i class="fa-solid fa-building text-3xl opacity-80"></i>
-                        <div class="kpi-value">${totalSPEs}</div>
-                        <div class="kpi-label">Total SPEs</div>
+            <div class="fade-in animate-fade-in">
+                <!-- Header -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-800">Painel Executivo</h2>
+                    <p class="text-sm text-slate-500">Visão consolidada da operação e saúde dos projetos.</p>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Operações Totais</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-extrabold text-slate-800">${totalOps}</span>
+                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card bg-gradient-to-br from-teal-500 to-teal-600">
-                        <i class="fa-solid fa-check-circle text-3xl opacity-80"></i>
-                        <div class="kpi-value">${slaPercent}%</div>
-                        <div class="kpi-label">Dentro do SLA</div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Em Onboarding</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-extrabold text-blue-600">${inOnboarding}</span>
+                            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                                <i class="fa-solid fa-rocket"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card bg-gradient-to-br from-amber-500 to-amber-600">
-                        <i class="fa-solid fa-hourglass-half text-3xl opacity-80"></i>
-                        <div class="kpi-value">${pendingTasks}</div>
-                        <div class="kpi-label">Pendências</div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pendências Críticas</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-extrabold text-rose-600">${withPendencies.length}</span>
+                            <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-rose-400 mt-2 font-medium">Empresas com bloqueio ativo</p>
                     </div>
-                    <div class="kpi-card bg-gradient-to-br from-red-500 to-red-600">
-                        <i class="fa-solid fa-exclamation-circle text-3xl opacity-80"></i>
-                        <div class="kpi-value">${delayedTasks}</div>
-                        <div class="kpi-label">Em Atraso</div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">TTV Médio</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-extrabold text-emerald-600">${avgTtv} <small class="text-xs font-bold text-emerald-400">DIAS</small></span>
+                            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
+                                <i class="fa-solid fa-stopwatch"></i>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-emerald-400 mt-2 font-medium">Média de ciclo completo</p>
                     </div>
                 </div>
 
-                <!-- Charts Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="chart-container">
-                        <h3 class="chart-title"><i class="fa-solid fa-chart-bar mr-2"></i>Distribuição por Status</h3>
-                        <canvas id="statusChart"></canvas>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Top Delays -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-slate-800">Top Atrasos por Cliente</h3>
+                            <i class="fa-solid fa-ranking-star text-amber-400"></i>
+                        </div>
+                        <div class="space-y-4">
+                            ${top10Clients.length > 0 ? top10Clients.map((c, i) => `
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <span class="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400">${i + 1}</span>
+                                        <span class="text-sm text-slate-600 font-medium truncate">${this.escapeHtml(c.name)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">${c.count}</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-sm text-slate-400 italic">Nenhum atraso mapeado.</p>'}
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <h3 class="chart-title"><i class="fa-solid fa-chart-pie mr-2"></i>Fases das SPEs</h3>
-                        <canvas id="phasesChart"></canvas>
+
+                    <!-- Detalhes de Pendências -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-6 border-bottom border-slate-50 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800">Operações com Pendências</h3>
+                            <button onclick="App.setView('pendencias')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700">Ver todas <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                                    <tr>
+                                        <th class="px-6 py-3">SPE / Empresa</th>
+                                        <th class="px-6 py-3">Motivo Crítico</th>
+                                        <th class="px-6 py-3 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    ${withPendencies.length > 0 ? withPendencies.slice(0, 10).map(s => {
+            const blockedTask = s.tasks.find(t => (t.status_tarefa || '').toLowerCase().includes('bloq'));
+            return `
+                                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <div class="font-bold text-slate-700 truncate max-w-[200px]">${this.escapeHtml(s.razao_social_da_spe)}</div>
+                                                    <div class="text-[10px] text-slate-400 uppercase font-medium">${this.escapeHtml(s.razao_social_cliente)}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    ${blockedTask ? `
+                                                        <span class="inline-flex items-center gap-1 text-rose-600 font-medium overflow-hidden truncate max-w-[200px]">
+                                                            <i class="fa-solid fa-ban text-[10px]"></i> ${this.escapeHtml(blockedTask.tarefa)}
+                                                        </span>
+                                                    ` : '<span class="text-slate-400 italic">Gargalo operacional</span>'}
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                    <button onclick="App.setView('company', { spe: '${this.escapeAttr(s.razao_social_da_spe)}' })" 
+                                                            class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center justify-center ml-auto">
+                                                        <i class="fa-solid fa-eye text-xs"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+        }).join('') : `
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-12 text-center text-slate-400 italic">Nenhuma pendência crítica encontrada.</td>
+                                        </tr>
+                                    `}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Footer: Pendencias com Clientes -->
+                <div class="bg-indigo-900 rounded-2xl p-6 text-white flex items-center justify-between shadow-lg shadow-indigo-100">
+                    <div class="flex items-center gap-6">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white text-xl">
+                            <i class="fa-solid fa-handshake"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg">Pendências com Clientes</h3>
+                            <p class="text-sm text-indigo-200">Existem <strong>${clientPendingTasks.length}</strong> tarefas aguardando retorno ou ação direta do cliente.</p>
+                        </div>
+                    </div>
+                    <button onclick="App.setView('pendencias')" class="bg-white text-indigo-900 font-bold px-6 py-2 rounded-xl text-sm hover:bg-slate-100 transition-colors">
+                        Atuar no Comercial
+                    </button>
                 </div>
             </div>
         `;
-
-        // Initialize Charts
-        this.renderStatusChart(Object.keys(statusCounts), Object.values(statusCounts));
-        this.renderPhasesChart(Object.keys(phaseCounts), Object.values(phaseCounts));
     },
+
 
     renderStatusChart(labels, values) {
         const ctx = document.getElementById('statusChart');
