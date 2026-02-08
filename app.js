@@ -883,7 +883,7 @@ const App = {
         `;
     },
 
-    // V2 Task Row Component
+    // V2 Task Row Component with Date Columns
     renderTaskRow(task, speName) {
         const statusClass = task.is_done ? 'task-row--completed' :
             task.is_delayed ? 'task-row--delayed' :
@@ -898,6 +898,9 @@ const App = {
             : 'task-row__responsibility--cliente';
 
         const isOverdue = task.is_delayed && !task.is_done;
+
+        // Check if task was completed late (NEW LOGIC)
+        const completedLate = task.is_done && task.conclusao_tarefa && task.data_prazo_sla && task.conclusao_tarefa > task.data_prazo_sla;
 
         return `
             <div class="task-row ${statusClass}">
@@ -916,6 +919,7 @@ const App = {
                         <div class="task-row__info">
                             <div class="task-row__name ${task.is_done ? 'task-row__name--completed' : ''}">
                                 ${this.escapeHtml(task.nome_tarefa)}
+                                ${completedLate ? '<span class="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Concluída com Atraso</span>' : ''}
                             </div>
                             <div class="task-row__meta">
                                 ${task.responsabilidade ? `
@@ -931,23 +935,53 @@ const App = {
                             </div>
                         </div>
                     </div>
-                    <div class="task-row__right">
-                        <div class="task-row__due ${isOverdue ? 'task-row__due--overdue' : ''}">
-                            ${task.data_prazo_sla
-                ? `<i class="fa-solid fa-calendar mr-1"></i>${WorkingHoursEngine.formatDate(task.data_prazo_sla)}`
-                : '-'
+                    
+                    <!-- Date Columns Grid -->
+                    <div class="task-row__dates">
+                        <div class="task-date-col">
+                            <span class="task-date-label">Criação</span>
+                            <span class="task-date-value">
+                                ${task.criacao_tarefa
+                ? WorkingHoursEngine.formatDate(task.criacao_tarefa)
+                : '<span class="text-slate-300">-</span>'
             }
-                        </div>
-                        ${task.sla_dias ? `
-                            <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">
-                                SLA ${task.sla_dias}d
                             </span>
-                        ` : ''}
+                        </div>
+                        
+                        <div class="task-date-col">
+                            <span class="task-date-label">Previsão (SLA)</span>
+                            <span class="task-date-value ${isOverdue ? 'text-rose-600 font-semibold' : ''}">
+                                ${task.data_prazo_sla
+                ? `<i class="fa-solid fa-calendar mr-1"></i>${WorkingHoursEngine.formatDate(task.data_prazo_sla)}`
+                : '<span class="text-slate-300">-</span>'
+            }
+                            </span>
+                        </div>
+                        
+                        <div class="task-date-col">
+                            <span class="task-date-label">Conclusão</span>
+                            <span class="task-date-value ${completedLate ? 'text-amber-600 font-semibold' : ''}">
+                                ${task.conclusao_tarefa
+                ? `<i class="fa-solid fa-check-circle mr-1"></i>${WorkingHoursEngine.formatDate(task.conclusao_tarefa)}`
+                : '<span class="text-slate-300">Em aberto</span>'
+            }
+                            </span>
+                        </div>
+                        
+                        <div class="task-date-col">
+                            <span class="task-date-label">SLA</span>
+                            <span class="task-date-value">
+                                ${task.sla_dias_uteis_padrao
+                ? `<span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded">${task.sla_dias_uteis_padrao}d úteis</span>`
+                : '<span class="text-slate-300">-</span>'
+            }
+                            </span>
+                        </div>
                     </div>
                 </div>
-                ${task.observacao ? `
+                ${task.comentario_resolucao_pendencia ? `
                     <div class="task-row__comment">
-                        ${this.escapeHtml(task.observacao)}
+                        <i class="fa-solid fa-comment-dots mr-2 text-slate-400"></i>${this.escapeHtml(task.comentario_resolucao_pendencia)}
                     </div>
                 ` : ''}
             </div>
@@ -1488,12 +1522,31 @@ const App = {
         const maxDays = daysArray.length > 0 ? Math.max(...daysArray) : 0;
         const avgDays = daysArray.length > 0 ? Math.round(daysArray.reduce((a, b) => a + b, 0) / daysArray.length) : 0;
 
-        // Status counts for chart (per task)
+        // Consolidated Status for Esteiras (Process + Esteira)
+        const esteiraStatusMap = {};
+        data.forEach(d => {
+            const key = `${d.process_id}_${d.esteira}`;
+            if (!esteiraStatusMap[key]) {
+                const status = (d.status_esteira_detalhado || '').toLowerCase();
+                let statusType = 'onTrack';
+                if (status.includes('conclu') || status.includes('finaliz')) statusType = 'completed';
+                else if (status.includes('bloq') || status.includes('parado') || status.includes('suspen')) statusType = 'blocked';
+                else if (status.includes('risco') || status.includes('atras') || status.includes('atraso')) statusType = 'atRisk';
+
+                esteiraStatusMap[key] = {
+                    type: statusType,
+                    name: d.esteira || 'Geral'
+                };
+            }
+        });
+
+        const distinctEsteiras = Object.values(esteiraStatusMap);
         const statusCounts = {
-            onTrack: data.filter(d => !d.is_delayed && !d.is_done && !(d.status_real || '').toLowerCase().includes('bloq')).length,
-            atRisk: data.filter(d => d.is_delayed && !d.is_done).length,
-            delayed: data.filter(d => d.is_delayed).length,
-            blocked: data.filter(d => (d.status_real || '').toLowerCase().includes('bloq')).length
+            onTrack: distinctEsteiras.filter(e => e.type === 'onTrack').length,
+            atRisk: distinctEsteiras.filter(e => e.type === 'atRisk').length,
+            blocked: distinctEsteiras.filter(e => e.type === 'blocked').length,
+            completed: distinctEsteiras.filter(e => e.type === 'completed').length,
+            total: distinctEsteiras.length
         };
 
         const html = `
@@ -1507,7 +1560,7 @@ const App = {
                     <div class="text-xs text-slate-400">Atualizado: Agora mesmo</div>
                 </div>
 
-                <!-- Metric Cards Grid - Row 1: Clients & Companies -->
+                <!-- Metric Cards Grid - Simplified -->
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-card__content">
@@ -1524,56 +1577,10 @@ const App = {
                         <div class="metric-card__content">
                             <p class="metric-card__title">Empresas (SPEs)</p>
                             <h3 class="metric-card__value">${totalSPEs}</h3>
-                            <p class="text-xs text-slate-400">Empresas em onboarding</p>
+                            <p class="text-xs text-slate-400">Total de SPEs em onboarding</p>
                         </div>
                         <div class="metric-card__icon metric-card__icon--info">
                             <i class="fa-solid fa-building"></i>
-                        </div>
-                    </div>
-                    
-                    <!-- Companies by Status Mini-cards -->
-                    <div class="metric-card" style="flex-direction: column; align-items: stretch;">
-                        <p class="metric-card__title mb-2">Empresas por Status</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="flex items-center gap-2 bg-emerald-50 px-2 py-1 rounded">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span class="text-xs text-emerald-700 font-bold">${speStatusCounts.onTrack}</span>
-                                <span class="text-[10px] text-emerald-600">Em Dia</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-amber-50 px-2 py-1 rounded">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <span class="text-xs text-amber-700 font-bold">${speStatusCounts.atRisk}</span>
-                                <span class="text-[10px] text-amber-600">Em Risco</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded">
-                                <span class="w-2 h-2 rounded-full bg-slate-700"></span>
-                                <span class="text-xs text-slate-700 font-bold">${speStatusCounts.blocked}</span>
-                                <span class="text-[10px] text-slate-600">Bloqueado</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                <span class="text-xs text-blue-700 font-bold">${speStatusCounts.completed}</span>
-                                <span class="text-[10px] text-blue-600">Concluído</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Time Since Kickoff -->
-                    <div class="metric-card" style="flex-direction: column; align-items: stretch;">
-                        <p class="metric-card__title mb-2">Tempo em Aberto (desde Kick-off)</p>
-                        <div class="flex justify-between items-end gap-3">
-                            <div class="text-center flex-1 bg-emerald-50 py-2 rounded">
-                                <p class="text-lg font-bold text-emerald-700">${minDays}d</p>
-                                <p class="text-[10px] text-emerald-600 uppercase font-bold">Menor</p>
-                            </div>
-                            <div class="text-center flex-1 bg-indigo-50 py-2 rounded">
-                                <p class="text-lg font-bold text-indigo-700">${avgDays}d</p>
-                                <p class="text-[10px] text-indigo-600 uppercase font-bold">Médio</p>
-                            </div>
-                            <div class="text-center flex-1 bg-rose-50 py-2 rounded">
-                                <p class="text-lg font-bold text-rose-700">${maxDays}d</p>
-                                <p class="text-[10px] text-rose-600 uppercase font-bold">Maior</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1582,12 +1589,12 @@ const App = {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Status Chart -->
                     <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-800 mb-4">Saúde do Portfólio</h3>
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Saúde das Esteiras</h3>
                         <div class="space-y-4">
-                            ${this.renderStatusBar('Em Dia', statusCounts.onTrack, data.length, 'bg-emerald-500')}
-                            ${this.renderStatusBar('Em Risco', statusCounts.atRisk, data.length, 'bg-amber-500')}
-                            ${this.renderStatusBar('Atrasado', statusCounts.delayed, data.length, 'bg-rose-500')}
-                            ${this.renderStatusBar('Bloqueado', statusCounts.blocked, data.length, 'bg-slate-800')}
+                            ${this.renderStatusBar('Em Dia', statusCounts.onTrack, statusCounts.total, 'bg-emerald-500')}
+                            ${this.renderStatusBar('Em Risco', statusCounts.atRisk, statusCounts.total, 'bg-amber-500')}
+                            ${this.renderStatusBar('Bloqueado', statusCounts.blocked, statusCounts.total, 'bg-slate-800')}
+                            ${this.renderStatusBar('Concluído', statusCounts.completed, statusCounts.total, 'bg-blue-500')}
                         </div>
                     </div>
 
@@ -1595,7 +1602,7 @@ const App = {
                     <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                         <h3 class="text-lg font-bold text-slate-800 mb-4">Esteiras Ativas</h3>
                         <div id="phase-chart" class="h-64">
-                            ${this.renderPhaseDistribution()}
+                            ${this.renderPhaseDistribution(distinctEsteiras)}
                         </div>
                     </div>
                 </div>
@@ -1629,26 +1636,29 @@ const App = {
         `;
     },
 
-    // Helper: Render phase distribution
-    renderPhaseDistribution() {
-        const data = this.getFilteredData();
+    // Helper: Render phase distribution based on unique Esteiras
+    renderPhaseDistribution(distinctEsteiras) {
+        if (!distinctEsteiras) return '<div class="p-4 text-center text-slate-400">Sem dados</div>';
+
         const esteiraCounts = {};
-        data.forEach(d => {
-            const esteira = d.esteira || 'Geral';
-            esteiraCounts[esteira] = (esteiraCounts[esteira] || 0) + 1;
+        distinctEsteiras.forEach(e => {
+            esteiraCounts[e.name] = (esteiraCounts[e.name] || 0) + 1;
         });
 
-        const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b'];
-        let html = '<div class="space-y-3">';
-        Object.entries(esteiraCounts).slice(0, 5).forEach(([name, count], i) => {
-            html += `
-                <div class="flex items-center gap-3">
-                    <div class="w-3 h-3 rounded-full" style="background: ${colors[i % colors.length]}"></div>
-                    <span class="flex-1 text-sm text-slate-600 truncate">${name}</span>
-                    <span class="text-sm font-bold text-slate-700">${count}</span>
-                </div>
-            `;
-        });
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+        let html = '<div class="space-y-3 pt-2">';
+        Object.entries(esteiraCounts)
+            .sort((a, b) => b[1] - a[1]) // Sort by count
+            .slice(0, 7) // Show up to 7 types
+            .forEach(([name, count], i) => {
+                html += `
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full" style="background: ${colors[i % colors.length]}"></div>
+                        <span class="flex-1 text-sm text-slate-600 truncate">${name}</span>
+                        <span class="text-sm font-bold text-slate-700">${count}</span>
+                    </div>
+                `;
+            });
         html += '</div>';
         return html;
     },
@@ -1748,6 +1758,27 @@ const App = {
 
         const visibleData = this.getFilteredData();
 
+        // Group data by SPE to calculate date ranges
+        const speRanges = {};
+        visibleData.forEach(task => {
+            const spe = task.razao_social_da_spe;
+            const start = task.data_kick_off || task.data_inicio_jornada || task.criacao_tarefa;
+            const end = task.conclusao_tarefa || task.data_prazo_sla;
+
+            if (!spe) return;
+            if (!speRanges[spe]) {
+                speRanges[spe] = {
+                    name: spe,
+                    start: start,
+                    end: end,
+                    status: task.status_global_processo || 'Em Andamento'
+                };
+            } else {
+                if (start && (!speRanges[spe].start || start < speRanges[spe].start)) speRanges[spe].start = start;
+                if (end && (!speRanges[spe].end || end > speRanges[spe].end)) speRanges[spe].end = end;
+            }
+        });
+
         for (let d = 1; d <= daysInMonth; d++) {
             const dateObj = new Date(year, month, d);
             const dateStr = dateObj.toISOString().split('T')[0];
@@ -1771,23 +1802,34 @@ const App = {
 
             const content = cell.querySelector('.flex-col');
 
-            // 1. Barras de Esteiras (Gantt Logic) - Usando novo modelo
-            visibleData.forEach(task => {
-                const startDate = task.criacao_tarefa;
-                const endDate = task.conclusao_tarefa || task.data_prazo_sla;
-                if (!startDate || !endDate) return;
+            // 1. Barras de Empresas (Grouped Logic)
+            Object.values(speRanges).forEach(spe => {
+                if (!spe.start || !spe.end) return;
 
-                if (dateStr >= startDate && dateStr <= endDate) {
-                    const isStart = dateStr === startDate;
-                    const isEnd = dateStr === endDate;
-                    const color = this.getEsteiraColor(task.esteira);
+                if (dateStr >= spe.start && dateStr <= spe.end) {
+                    const isStart = dateStr === spe.start;
+                    const isEnd = dateStr === spe.end;
+
+                    // Determine color based on status
+                    let color = 'var(--color-primary)';
+                    const status = spe.status.toLowerCase();
+                    if (status.includes('conclu')) color = 'var(--status-success)';
+                    if (status.includes('bloq') || status.includes('suspen')) color = 'var(--status-danger)';
+                    if (status.includes('risco') || status.includes('atras')) color = 'var(--status-warning)';
 
                     const bar = document.createElement('div');
                     bar.className = `esteira-bar ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''} ${!isStart && !isEnd ? 'middle' : ''}`;
                     bar.style.backgroundColor = color;
-                    bar.textContent = isStart ? `► ${task.esteira}` : (isEnd ? `■ ${task.nome_tarefa}` : '');
-                    if (isStart) bar.title = `${task.razao_social_cliente}: ${task.nome_tarefa} (Início)`;
-                    if (isEnd) bar.title = `${task.razao_social_cliente}: ${task.nome_tarefa} (Prazo SLA)`;
+                    bar.textContent = isStart ? `🏢 ${spe.name}` : '';
+                    if (isStart) bar.title = `${spe.name} (Início via ${spe.start})`;
+                    if (isEnd) bar.title = `${spe.name} (Fim via ${spe.end})`;
+
+                    // Add click and cursor
+                    bar.style.cursor = 'pointer';
+                    bar.onclick = (e) => {
+                        e.stopPropagation();
+                        App.router.go('company', { spe: spe.name });
+                    };
 
                     content.appendChild(bar);
                 }
@@ -1916,9 +1958,9 @@ const App = {
             const n = {};
             Object.keys(row).forEach(k => n[k.toLowerCase().trim().replace(/\s+/g, '_')] = row[k]);
 
-            const criacao = this.parseExcelDate(n.criacao_tarefa || n.criacao) || new Date().toISOString().split('T')[0];
+            const criacao = this.parseExcelDate(n.criacao_tarefa || n.criacao);
             const conclusao = this.parseExcelDate(n.conclusao_tarefa || n.conclusao);
-            const prazoSLA = this.parseExcelDate(n.data_prazo_sla || n.prazo) || WorkingHoursEngine.addWorkingDays(criacao, parseInt(n.sla_dias_uteis_padrao || n.sla) || 5);
+            const prazoSLA = this.parseExcelDate(n.data_prazo_sla || n.prazo) || (criacao ? WorkingHoursEngine.addWorkingDays(criacao, parseInt(n.sla_dias_uteis_padrao || n.sla) || 5) : null);
             const statusReal = n.status_real || n.status || 'Aberta';
             const comentario = n.comentario_resolucao_pendencia || n.comentario || '';
 
@@ -2008,9 +2050,47 @@ const App = {
 
     parseExcelDate(val) {
         if (!val) return null;
-        if (typeof val === 'string' && val.includes('-')) return val; // Já é ISO
-        // Se for serial do Excel, tratar aqui se necessário, mas SheetJS geralmente converte se configurado
-        return new Date().toISOString().split('T')[0];
+
+        // Se já é uma string ISO válida
+        if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}$/)) return val;
+
+        // Se for um objeto Date do JavaScript (formato mais comum do SheetJS)
+        if (val instanceof Date) {
+            if (!isNaN(val.getTime())) {
+                return val.toISOString().split('T')[0];
+            }
+            return null;
+        }
+
+        // Se for serial do Excel (número)
+        if (typeof val === 'number') {
+            // Excel serial date to JS Date object
+            // Excel starts on Dec 30, 1899 (mostly)
+            const date = new Date((val - 25569) * 86400 * 1000);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+        }
+
+        // Tentar converter string legível (DD/MM/YYYY) para ISO
+        if (typeof val === 'string' && val.includes('/')) {
+            const parts = val.split('/');
+            if (parts.length === 3) {
+                // assume DD/MM/YYYY
+                const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                return iso;
+            }
+        }
+
+        // Tentar parsear string de data genérica
+        if (typeof val === 'string') {
+            const parsed = new Date(val);
+            if (!isNaN(parsed.getTime())) {
+                return parsed.toISOString().split('T')[0];
+            }
+        }
+
+        return null;
     },
 
     // ============================================================
@@ -2284,9 +2364,11 @@ const App = {
                 // Milestone dates (TtV)
                 data_inicio_contrato: this.parseExcelDate(n.data_inicio_contrato),
                 data_kick_off_cliente: this.parseExcelDate(n.data_kick_off_cliente || n.data_kick_off),
+                data_handover_comercial: this.parseExcelDate(n.data_handover_comercial || n.handover),
                 data_apresentacao_viabilidade: this.parseExcelDate(n.data_apresentacao_viabilidade || n.data_viabilidade),
                 data_inicio_financeira: this.parseExcelDate(n.data_inicio_financeira || n.data_financeira),
                 data_inicio_carteira: this.parseExcelDate(n.data_inicio_carteira || n.data_carteira),
+                kpi_ttv_dias_corridos: parseInt(n.kpi_ttv_dias_corridos) || 0,
 
                 // Flags
                 is_ativo_financeiro: this.parseBool(n.is_ativo_financeiro),
@@ -2355,10 +2437,10 @@ const App = {
             const n = this.normalizeKeys(row);
             const processId = n.process_id || '';
 
-            const criacao = this.parseExcelDate(n.criacao_tarefa || n.criacao) || today;
+            const criacao = this.parseExcelDate(n.criacao_tarefa || n.criacao);
             const conclusao = this.parseExcelDate(n.conclusao_tarefa || n.conclusao);
             const slaDias = parseInt(n.sla_dias_uteis_padrao || n.sla) || 5;
-            const prazoSLA = this.parseExcelDate(n.data_prazo_sla || n.prazo) || WorkingHoursEngine.addWorkingDays(criacao, slaDias);
+            const prazoSLA = this.parseExcelDate(n.data_prazo_sla || n.prazo) || (criacao ? WorkingHoursEngine.addWorkingDays(criacao, slaDias) : null);
             const statusReal = n.status_real || n.status || 'Aberta';
             const isConcluded = statusReal.toLowerCase().includes('conclu');
             const comentario = n.comentario_resolucao_pendencia || n.comentario || '';
@@ -2390,12 +2472,29 @@ const App = {
 
             // Check if parent exists
             if (operationsMap[processId]) {
-                // Get parent info for task
+                // Get parent info for task - copy ALL relevant fields
                 const parent = operationsMap[processId];
                 task.razao_social_cliente = parent.razao_social_cliente;
                 task.razao_social_da_spe = parent.razao_social_da_spe;
                 task.cnpj_da_spe = parent.cnpj_da_spe;
                 task.fase_da_spe = parent.fase_da_spe;
+                task.erp = parent.erp;
+                task.codigo_uau = parent.codigo_uau;
+                task.servicos_contratados = parent.servicos_contratados;
+                task.status_jornada_cliente = parent.status_jornada_cliente;
+                task.status_global_processo = parent.status_jornada_cliente; // Alias for global status
+
+                // Milestone dates
+                task.data_inicio_contrato = parent.data_inicio_contrato;
+                task.data_kick_off = parent.data_kick_off_cliente;
+                task.data_kick_off_cliente = parent.data_kick_off_cliente;
+                task.data_handover_comercial = parent.data_handover_comercial;
+                task.data_apresentacao_viabilidade = parent.data_apresentacao_viabilidade;
+                task.data_inicio_financeira = parent.data_inicio_financeira;
+                task.data_inicio_carteira = parent.data_inicio_carteira;
+                task.kpi_ttv_dias_corridos = parent.kpi_ttv_dias_corridos;
+                task.is_ativo_financeiro = parent.is_ativo_financeiro;
+                task.is_ativo_carteira = parent.is_ativo_carteira;
 
                 tasks.push(task);
                 operationsMap[processId].tasks.push(task);
@@ -2551,27 +2650,36 @@ const App = {
 
     renderStats() {
         const data = this.getFilteredData();
-        const total = data.length;
-        const done = data.filter(d => d.status_real && d.status_real.toLowerCase().includes('conclu')).length;
-        const pending = total - done;
+        const clients = [...new Set(data.map(d => d.razao_social_cliente))].length;
+        const spes = [...new Set(data.map(d => d.razao_social_da_spe))].length;
+
+        // Calculate health status based on global status of SPEs
+        const speStatusMap = {};
+        data.forEach(d => {
+            const spe = d.razao_social_da_spe;
+            if (!speStatusMap[spe]) {
+                const status = (d.status_global_processo || '').toLowerCase();
+                speStatusMap[spe] = status;
+            }
+        });
+
+        const delayedSpes = Object.values(speStatusMap).filter(s => s.includes('risco') || s.includes('atras')).length;
 
         document.getElementById('stats-bar-container').innerHTML = `
             <div class="stat-card">
-                <div class="stat-icon text-blue-400"><i class="fa-solid fa-layer-group"></i></div>
-                <div class="stat-content"><span class="stat-value">${total}</span><span class="stat-label">Tarefas</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon text-teal-400"><i class="fa-solid fa-check-circle"></i></div>
-                <div class="stat-content"><span class="stat-value">${done}</span><span class="stat-label">Concluídas</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon text-amber-400"><i class="fa-solid fa-clock"></i></div>
-                <div class="stat-content"><span class="stat-value">${pending}</span><span class="stat-label">Em Aberto</span></div>
+                <div class="stat-icon text-indigo-400"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-content"><span class="stat-value">${clients}</span><span class="stat-label">Clientes</span></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon text-purple-400"><i class="fa-solid fa-building"></i></div>
-                <div class="stat-content"><span class="stat-value">${[...new Set(data.map(d => d.razao_social_da_spe))].length}</span><span class="stat-label">Projetos</span></div>
+                <div class="stat-content"><span class="stat-value">${spes}</span><span class="stat-label">Empresas (SPEs)</span></div>
             </div>
+            ${delayedSpes > 0 ? `
+            <div class="stat-card">
+                <div class="stat-icon text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-content"><span class="stat-value">${delayedSpes}</span><span class="stat-label">SPEs em Risco</span></div>
+            </div>
+            ` : ''}
         `;
     },
 
