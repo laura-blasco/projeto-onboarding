@@ -2013,151 +2013,216 @@ const App = {
         const year = this.state.currentMonth.getFullYear();
         const month = this.state.currentMonth.getMonth();
         const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const dayNames = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-        // Navigation Header
-        const nav = document.createElement('div');
-        nav.className = 'flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200 fade-in';
-        nav.innerHTML = `
-            <button onclick="App.navMonth(-1)" class="p-2 hover:bg-slate-50 rounded-lg text-slate-600"><i class="fa-solid fa-chevron-left"></i></button>
-            <div class="text-center">
-                <h2 class="text-xl font-bold text-slate-800 capitalize">${monthNames[month]} <span class="text-teal-600">${year}</span></h2>
-            </div>
-            <button onclick="App.navMonth(1)" class="p-2 hover:bg-slate-50 rounded-lg text-slate-600"><i class="fa-solid fa-chevron-right"></i></button>
-        `;
-        container.appendChild(nav);
-
-        // Grid Container
-        const grid = document.createElement('div');
-        grid.className = 'calendar-month fade-in';
-
-        // Week Headers
-        const weekHeader = document.createElement('div');
-        weekHeader.className = 'calendar-week-row';
-        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach(d => {
-            const cell = document.createElement('div');
-            cell.className = 'calendar-week-day';
-            cell.textContent = d;
-            weekHeader.appendChild(cell);
-        });
-        grid.appendChild(weekHeader);
-
-        // Days Logic
-        const daysBody = document.createElement('div');
-        daysBody.className = 'calendar-grid';
-
-        const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const colWidth = 40; // var(--gantt-day-width)
+        const todayStr = new Date().toISOString().split('T')[0];
 
-        // Empty cells before start
-        for (let i = 0; i < firstDay; i++) {
-            const empty = document.createElement('div');
-            empty.className = 'calendar-day bg-slate-50/30';
-            daysBody.appendChild(empty);
-        }
+        // 1. Navigation Toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'flex items-center justify-between mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-200';
+        toolbar.innerHTML = `
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold text-slate-800 capitalize">${monthNames[month]} <span class="text-indigo-600 font-extrabold">${year}</span></h2>
+                <div class="flex items-center bg-slate-100 rounded-lg p-1">
+                    <button onclick="App.navMonth(-1)" class="w-8 h-8 flex items-center justify-center hover:bg-white hover:shadow-sm rounded-md text-slate-600 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="App.navMonth(0)" class="px-3 py-1 text-xs font-bold hover:bg-white hover:shadow-sm rounded-md text-slate-600 transition-all uppercase">Hoje</button>
+                    <button onclick="App.navMonth(1)" class="w-8 h-8 flex items-center justify-center hover:bg-white hover:shadow-sm rounded-md text-slate-600 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Concluído</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Em Andamento</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span> Atraso</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span> Bloqueio</span>
+            </div>
+        `;
+        container.appendChild(toolbar);
 
-        const visibleData = this.getFilteredData();
+        // 2. Gantt Wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gantt-wrapper fade-in';
 
-        // Group data by SPE to calculate date ranges
-        const speRanges = {};
-        visibleData.forEach(task => {
-            const spe = task.razao_social_da_spe;
-            const start = task.data_kick_off || task.data_inicio_jornada || task.criacao_tarefa;
-            const end = task.conclusao_tarefa || task.data_prazo_sla;
+        // 2.1 Header
+        const header = document.createElement('div');
+        header.className = 'gantt-header sticky top-0 z-30';
 
-            if (!spe) return;
-            if (!speRanges[spe]) {
-                speRanges[spe] = {
-                    name: spe,
-                    start: start,
-                    end: end,
-                    status: task.status_global_processo || 'Em Andamento'
-                };
-            } else {
-                if (start && (!speRanges[spe].start || start < speRanges[spe].start)) speRanges[spe].start = start;
-                if (end && (!speRanges[spe].end || end > speRanges[spe].end)) speRanges[spe].end = end;
-            }
-        });
-
+        let daysHtml = '';
         for (let d = 1; d <= daysInMonth; d++) {
             const dateObj = new Date(year, month, d);
-            const dateStr = dateObj.toISOString().split('T')[0];
             const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-            const isToday = dateStr === new Date().toISOString().split('T')[0];
-
-            const cell = document.createElement('div');
-            cell.className = `calendar-day group ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}`;
-
-            // Header do Dia
-            cell.innerHTML = `
-                <div class="day-header">
-                    <span class="day-number">${d}</span>
-                    <div class="day-actions">
-                        <button onclick="App.openAnnotationModal('${dateStr}')"><i class="fa-regular fa-note-sticky"></i></button>
-                        <button onclick="App.openEventModal('${dateStr}')"><i class="fa-solid fa-plus"></i></button>
-                    </div>
+            const isToday = dateObj.toISOString().split('T')[0] === todayStr;
+            daysHtml += `
+                <div class="gantt-day-header ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}">
+                    <span class="gantt-day-name">${dayNames[dateObj.getDay()]}</span>
+                    <span class="gantt-day-num">${d}</span>
                 </div>
-                <div class="flex flex-col gap-1 mt-1 overflow-hidden"></div>
             `;
-
-            const content = cell.querySelector('.flex-col');
-
-            // 1. Barras de Empresas (Grouped Logic)
-            Object.values(speRanges).forEach(spe => {
-                if (!spe.start || !spe.end) return;
-
-                if (dateStr >= spe.start && dateStr <= spe.end) {
-                    const isStart = dateStr === spe.start;
-                    const isEnd = dateStr === spe.end;
-
-                    // Determine color based on status
-                    let color = 'var(--color-primary)';
-                    const status = spe.status.toLowerCase();
-                    if (status.includes('conclu')) color = 'var(--status-success)';
-                    if (status.includes('bloq') || status.includes('suspen')) color = 'var(--status-danger)';
-                    if (status.includes('risco') || status.includes('atras')) color = 'var(--status-warning)';
-
-                    const bar = document.createElement('div');
-                    bar.className = `esteira-bar ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''} ${!isStart && !isEnd ? 'middle' : ''}`;
-                    bar.style.backgroundColor = color;
-                    bar.textContent = isStart ? `🏢 ${spe.name}` : '';
-                    if (isStart) bar.title = `${spe.name} (Início via ${spe.start})`;
-                    if (isEnd) bar.title = `${spe.name} (Fim via ${spe.end})`;
-
-                    // Add click and cursor
-                    bar.style.cursor = 'pointer';
-                    bar.onclick = (e) => {
-                        e.stopPropagation();
-                        App.router.go('company', { spe: spe.name });
-                    };
-
-                    content.appendChild(bar);
-                }
-            });
-
-            // 2. Eventos Manuais
-            const dayEvents = this.state.events[dateStr] || [];
-            dayEvents.forEach(evt => {
-                const dot = document.createElement('div');
-                dot.className = 'event-dot';
-                dot.innerHTML = `<i class="fa-solid fa-circle text-[6px] text-teal-600"></i> <span class="truncate">${evt.title}</span>`;
-                content.appendChild(dot);
-            });
-
-            // 3. Anotações
-            const note = this.state.annotations[dateStr];
-            if (note) {
-                const noteIcon = document.createElement('div');
-                noteIcon.className = 'text-[10px] text-amber-500 mt-1 bg-amber-50 p-1 rounded border border-amber-100 truncate';
-                noteIcon.innerHTML = `<i class="fa-solid fa-sticky-note mr-1"></i>${note}`;
-                content.appendChild(noteIcon);
-            }
-
-            daysBody.appendChild(cell);
         }
 
-        grid.appendChild(daysBody);
-        container.appendChild(grid);
+        header.innerHTML = `
+            <div class="gantt-header-sidebar">Projetos</div>
+            <div class="gantt-header-days">${daysHtml}</div>
+        `;
+        wrapper.appendChild(header);
+
+        // 2.2 Content Area
+        const viewport = document.createElement('div');
+        viewport.className = 'gantt-viewport';
+
+        const timeline = document.createElement('div');
+        timeline.className = 'gantt-timeline-container';
+        timeline.id = 'gantt-timeline';
+
+        // 3. Process Data
+        const visibleData = this.getFilteredData();
+        const speMap = {};
+
+        visibleData.forEach(task => {
+            const spe = task.razao_social_da_spe;
+            if (!spe) return;
+            if (!speMap[spe]) {
+                speMap[spe] = {
+                    name: spe,
+                    start: task.data_kick_off || task.data_inicio_jornada || task.criacao_tarefa,
+                    end: task.conclusao_tarefa || task.data_prazo_sla,
+                    status: task.status_global_processo || 'Em Andamento',
+                    tasks: []
+                };
+            }
+            speMap[spe].tasks.push(task);
+
+            // Expand company range
+            const tStart = task.data_inicio_jornada || task.criacao_tarefa;
+            const tEnd = task.conclusao_tarefa || task.data_prazo_sla;
+            if (tStart && (!speMap[spe].start || tStart < speMap[spe].start)) speMap[spe].start = tStart;
+            if (tEnd && (!speMap[spe].end || tEnd > speMap[spe].end)) speMap[spe].end = tEnd;
+        });
+
+        // 4. Render Rows
+        Object.values(speMap).forEach(spe => {
+            const isExpanded = this.state.expandedItems[spe.name];
+
+            // Render SPE Row
+            const row = document.createElement('div');
+            row.className = 'gantt-row';
+            row.innerHTML = `
+                <div class="gantt-row-label" onclick="App.toggleGanttRow('${this.escapeAttr(spe.name)}')">
+                    <span class="gantt-expand-btn">
+                        <i class="fa-solid fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
+                    </span>
+                    <span class="truncate">${spe.name}</span>
+                </div>
+                <div class="gantt-row-grid">
+                    ${this.renderGanttBar(spe.start, spe.end, spe.status, spe.name, year, month, daysInMonth)}
+                </div>
+            `;
+            timeline.appendChild(row);
+
+            // Render Sub-Rows (Tasks) if expanded
+            if (isExpanded) {
+                // Group by esteira for cleaner view
+                const esteiras = {};
+                spe.tasks.forEach(t => {
+                    const e = t.esteira || 'Geral';
+                    if (!esteiras[e]) esteiras[e] = { name: e, start: null, end: null, tasks: [] };
+                    esteiras[e].tasks.push(t);
+                });
+
+                Object.values(esteiras).forEach(est => {
+                    const estStart = est.tasks.reduce((min, t) => {
+                        const s = t.data_inicio_jornada || t.criacao_tarefa;
+                        return (s && (!min || s < min)) ? s : min;
+                    }, null);
+                    const estEnd = est.tasks.reduce((max, t) => {
+                        const s = t.conclusao_tarefa || t.data_prazo_sla;
+                        return (s && (!max || s > max)) ? s : max;
+                    }, null);
+
+                    const subRow = document.createElement('div');
+                    subRow.className = 'gantt-row gantt-sub-row';
+                    subRow.innerHTML = `
+                        <div class="gantt-row-label">
+                            <i class="fa-solid fa-arrow-turn-up rotate-90 scale-75 mr-2 opacity-50"></i>
+                            <span class="truncate">${est.name}</span>
+                        </div>
+                        <div class="gantt-row-grid">
+                            ${this.renderGanttBar(estStart, estEnd, 'sub', est.name, year, month, daysInMonth, true)}
+                        </div>
+                    `;
+                    timeline.appendChild(subRow);
+                });
+            }
+        });
+
+        // Add Today Line if in view
+        const todayLine = document.createElement('div');
+        todayLine.className = 'gantt-today-line';
+        const todayObj = new Date();
+        if (todayObj.getFullYear() === year && todayObj.getMonth() === month) {
+            const left = (todayObj.getDate() - 1) * colWidth + (todayObj.getHours() / 24) * colWidth;
+            todayLine.style.left = `${left}px`;
+            timeline.appendChild(todayLine);
+        }
+
+        viewport.appendChild(timeline);
+        wrapper.appendChild(viewport);
+        container.appendChild(wrapper);
+
+        // Auto-scroll to today
+        if (todayObj.getFullYear() === year && todayObj.getMonth() === month) {
+            setTimeout(() => {
+                const scrollPos = (todayObj.getDate() - 3) * colWidth;
+                timeline.scrollLeft = Math.max(0, scrollPos);
+            }, 100);
+        }
     },
+
+    renderGanttBar(start, end, status, label, year, month, daysInMonth, isSub = false) {
+        if (!start || !end) return '';
+
+        const colWidth = 40;
+        const startDate = new Date(start + 'T00:00:00');
+        const endDate = new Date(end + 'T00:00:00');
+        const monthStart = new Date(year, month, 1);
+        const monthEnd = new Date(year, month, daysInMonth);
+
+        // Clip to current month
+        const displayStart = startDate < monthStart ? monthStart : startDate;
+        const displayEnd = endDate > monthEnd ? monthEnd : endDate;
+
+        if (displayStart > monthEnd || displayEnd < monthStart) return '';
+
+        const startIdx = displayStart.getDate() - 1;
+        const duration = (displayEnd.getTime() - displayStart.getTime()) / (1000 * 60 * 60 * 24) + 1;
+
+        const left = startIdx * colWidth;
+        const width = duration * colWidth;
+
+        let colorClass = 'bg-indigo-500';
+        if (status === 'sub') colorClass = 'bg-slate-300';
+        else {
+            const s = status.toLowerCase();
+            if (s.includes('conclu')) colorClass = 'bg-emerald-500';
+            else if (s.includes('bloq') || s.includes('suspen')) colorClass = 'bg-rose-500';
+            else if (s.includes('atras') || s.includes('risco')) colorClass = 'bg-amber-500';
+        }
+
+        return `
+            <div class="gantt-bar ${colorClass} ${isSub ? 'opacity-70' : ''}" 
+                 style="left: ${left}px; width: ${width}px;"
+                 title="${label} (${start} até ${end})">
+                ${isSub ? '' : `<span class="px-2 truncate">${label}</span>`}
+            </div>
+        `;
+    },
+
+    toggleGanttRow(speName) {
+        this.state.expandedItems[speName] = !this.state.expandedItems[speName];
+        this.render();
+    },
+
 
     // ============================================================
     // 4. DATA PROCESSING (Hierarchy Builder)
@@ -2876,9 +2941,14 @@ const App = {
         this.render();
     },
     navMonth(dir) {
-        this.state.currentMonth.setMonth(this.state.currentMonth.getMonth() + dir);
+        if (dir === 0) {
+            this.state.currentMonth = new Date();
+        } else {
+            this.state.currentMonth.setMonth(this.state.currentMonth.getMonth() + dir);
+        }
         this.render();
     },
+
 
     // Filtros
     populateFilters() {
