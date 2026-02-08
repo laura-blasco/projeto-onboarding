@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trinus Onboarding Manager v2.0 (RC1)</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="App.toggleSidebar()"></div>
+
+        <aside id="sidebar" class="sidebar">
+            <header class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="sidebar-title font-bold text-xl text-white">Trinus<span
+                            class="text-teal-400">Manager</span></span>
+                </div>
+                <button class="sidebar-close" onclick="App.toggleSidebar()"><i class="fa-solid fa-times"></i></button>
+            </header>
+            <nav class="sidebar-nav">
+                <p class="sidebar-section-title">Visões</p>
+                <ul id="sidebar-menu-main" class="sidebar-menu">
+                </ul>
+                <p class="sidebar-section-title">Dados</p>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item" onclick="App.openImportModal()">
+                        <i class="fa-solid fa-upload"></i> <span>Importar Dados (Excel)</span>
+                    </li>
+                    <li class="sidebar-menu-item" onclick="App.resetToDefaultData()">
+                        <i class="fa-solid fa-database"></i> <span>Resetar Base</span>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="app-main">
+            <header class="header">
+                <div class="header__left">
+                    <button class="mobile-toggle" onclick="App.toggleSidebar()"><i
+                            class="fa-solid fa-bars"></i></button>
+                    <div class="header__breadcrumb">
+                        <span class="breadcrumb-item">Gestão</span>
+                        <i class="fa-solid fa-chevron-right breadcrumb-separator"></i>
+                        <span id="breadcrumb-active"
+                            class="breadcrumb-item breadcrumb-item--active font-bold">Dashboard</span>
+                    </div>
+                </div>
+                <div class="header__right">
+                    <div class="filter-container">
+                        <label class="text-sm font-semibold text-gray-600 mr-2">Cliente:</label>
+                        <select id="client-filter" class="filter-dropdown"
+                            onchange="App.onClientFilterChange(this.value)">
+                            <option value="">Todos os Clientes</option>
+                        </select>
+                    </div>
+                    <div class="filter-container">
+                        <label class="text-sm font-semibold text-gray-600 mr-2">Serviço:</label>
+                        <select id="service-filter" class="filter-dropdown"
+                            onchange="App.onServiceFilterChange(this.value)">
+                            <option value="">Todos os Serviços</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+
+            <div id="stats-bar-container" class="stats-bar">
+            </div>
+
+            <div id="app-content" class="app-content relative"></div>
+        </main>
+    </div>
+
+    <div id="annotationModal"
+        class="fixed inset-0 bg-slate-900/90 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-slate-800">Anotações & Diário</h3>
+                <button onclick="App.closeModals()" class="p-2 hover:bg-slate-100 rounded-lg"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="text-sm text-gray-500 mb-2" id="annotationDateLabel">--/--/----</div>
+                <textarea id="generalAnnotation" rows="5"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                    placeholder="Registre impedimentos, avanços ou observações do dia..."></textarea>
+            </div>
+            <div class="flex gap-2 mt-6 pt-4 border-t">
+                <button onclick="App.closeModals()" class="u-btn bg-slate-100 text-slate-600">Cancelar</button>
+                <button onclick="App.saveAnnotation()" class="u-btn u-btn-primary flex-1">Salvar Registro</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="eventModal"
+        class="fixed inset-0 bg-slate-900/90 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-slate-800" id="eventModalTitle">Novo Evento</h3>
+                <button onclick="App.closeModals()" class="p-2 hover:bg-slate-100 rounded-lg"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título</label>
+                    <input type="text" id="eventTitle" placeholder="Ex: Reunião de Kick-off"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                        <input type="date" id="eventDate"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora</label>
+                        <input type="time" id="eventTime"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo</label>
+                    <select id="eventType"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="MEETING">🤝 Reunião</option>
+                        <option value="TRAINING">📚 Treinamento</option>
+                        <option value="DEADLINE">⚠️ Prazo Crítico</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-6 pt-4 border-t">
+                <button onclick="App.deleteEvent()" id="btnDeleteEvent"
+                    class="u-btn bg-red-100 text-red-600 hidden">Excluir</button>
+                <div class="flex-1"></div>
+                <button onclick="App.closeModals()" class="u-btn bg-slate-100 text-slate-600">Cancelar</button>
+                <button onclick="App.saveEvent()" class="u-btn u-btn-primary">Salvar Evento</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-import"
+        class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 fade-in">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-3 bg-teal-100 rounded-full text-teal-700"><i class="fa-solid fa-database text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Importar Dados</h3>
+                    <p class="text-xs text-slate-500">Suporta Excel multi-abas ou 3 arquivos separados</p>
+                </div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="flex gap-2 mb-4 bg-slate-100 p-1 rounded-lg">
+                <button id="import-mode-single" onclick="App.setImportMode('single')"
+                    class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all bg-white shadow text-teal-700">
+                    <i class="fa-solid fa-file-excel mr-1"></i> Excel Multi-Abas
+                </button>
+                <button id="import-mode-multi" onclick="App.setImportMode('multi')"
+                    class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all text-slate-600">
+                    <i class="fa-solid fa-files mr-1"></i> 3 Arquivos
+                </button>
+            </div>
+
+            <!-- Single File Mode -->
+            <div id="import-single-mode">
+                <div
+                    class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-teal-500 transition-colors cursor-pointer relative">
+                    <input type="file" id="import-file-input" accept=".xlsx,.xls"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onchange="App.onFileSelect(this)">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                    <p class="text-sm font-medium text-slate-600">Clique ou arraste o arquivo Excel</p>
+                    <p class="text-xs text-slate-400 mt-1">Abas esperadas: PROCESSOS, ESTEIRAS, TAREFAS</p>
+                </div>
+
+                <!-- Sheet Detection Status -->
+                <div id="import-sheets-status" class="hidden mt-4 space-y-2">
+                    <div class="text-xs font-medium text-slate-500 mb-2">Abas Detectadas:</div>
+                    <div id="sheet-processos" class="flex items-center gap-2 p-2 rounded bg-slate-50">
+                        <i class="fa-solid fa-circle-xmark text-slate-300"></i>
+                        <span class="text-sm">PROCESSOS</span>
+                        <span class="ml-auto text-xs text-slate-400" id="sheet-processos-count">-</span>
+                    </div>
+                    <div id="sheet-esteiras" class="flex items-center gap-2 p-2 rounded bg-slate-50">
+                        <i class="fa-solid fa-circle-xmark text-slate-300"></i>
+                        <span class="text-sm">ESTEIRAS</span>
+                        <span class="ml-auto text-xs text-slate-400" id="sheet-esteiras-count">-</span>
+                    </div>
+                    <div id="sheet-tarefas" class="flex items-center gap-2 p-2 rounded bg-slate-50">
+                        <i class="fa-solid fa-circle-xmark text-slate-300"></i>
+                        <span class="text-sm">TAREFAS</span>
+                        <span class="ml-auto text-xs text-slate-400" id="sheet-tarefas-count">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi File Mode (Fallback) -->
+            <div id="import-multi-mode" class="hidden space-y-3">
+                <div class="import-file-row">
+                    <label class="text-xs font-medium text-slate-600 block mb-1">
+                        <i class="fa-solid fa-building mr-1 text-teal-600"></i> processos_analitico.xlsx
+                    </label>
+                    <input type="file" id="import-file-processos" accept=".xlsx,.xls,.csv"
+                        class="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-teal-50 file:text-teal-700 file:font-medium file:cursor-pointer"
+                        onchange="App.onMultiFileSelect('processos', this)">
+                </div>
+                <div class="import-file-row">
+                    <label class="text-xs font-medium text-slate-600 block mb-1">
+                        <i class="fa-solid fa-stream mr-1 text-blue-600"></i> esteiras_analitico.xlsx
+                    </label>
+                    <input type="file" id="import-file-esteiras" accept=".xlsx,.xls,.csv"
+                        class="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium file:cursor-pointer"
+                        onchange="App.onMultiFileSelect('esteiras', this)">
+                </div>
+                <div class="import-file-row">
+                    <label class="text-xs font-medium text-slate-600 block mb-1">
+                        <i class="fa-solid fa-tasks mr-1 text-amber-600"></i> tarefas_fato.xlsx
+                    </label>
+                    <input type="file" id="import-file-tarefas" accept=".xlsx,.xls,.csv"
+                        class="w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:bg-amber-50 file:text-amber-700 file:font-medium file:cursor-pointer"
+                        onchange="App.onMultiFileSelect('tarefas', this)">
+                </div>
+            </div>
+
+            <!-- Error/Warning Messages -->
+            <div id="import-messages" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
+
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="App.closeModals()" class="u-btn bg-slate-100 text-slate-600">Cancelar</button>
+                <button onclick="App.confirmImport()" id="btn-confirm-import"
+                    class="u-btn u-btn-primary opacity-50 cursor-not-allowed" disabled>Processar Importação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip"
+        class="fixed hidden z-[100] pointer-events-none bg-slate-900 text-white text-xs rounded p-2 shadow-lg max-w-xs transition-opacity duration-200">
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
