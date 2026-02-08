@@ -324,21 +324,21 @@ const App = {
     getSpeStatus(speData) {
         if (!speData || speData.length === 0) return { status: 'unknown', label: 'Sem Dados', color: 'gray' };
 
-        // Use status_global_processo as the primary status driver
-        const globalStatus = (speData[0]?.status_global_processo || '').toLowerCase();
+        // Use status_global_processo OR status_jornada_cliente as the primary status driver
+        const globalStatus = ((speData[0]?.status_global_processo || '') + ' ' + (speData[0]?.status_jornada_cliente || '')).toLowerCase();
         const pendingCount = speData.filter(t => !t.is_done).length;
 
-        // Map status_global_processo to internal status
-        if (globalStatus.includes('conclu') || globalStatus.includes('finaliz')) {
+        // Map status_global_processo and jornada status to internal status
+        if (globalStatus.includes('5. conclu') || globalStatus.includes('finaliz')) {
             return { status: 'healthy', label: 'Concluído', color: 'green', pendingCount: 0 };
         }
         if (globalStatus.includes('bloq') || globalStatus.includes('parado') || globalStatus.includes('suspen')) {
             return { status: 'risk', label: 'Bloqueado', color: 'red', pendingCount };
         }
-        if (globalStatus.includes('risco') || globalStatus.includes('atras') || globalStatus.includes('atraso')) {
-            return { status: 'attention', label: 'Em Risco', color: 'amber', pendingCount };
+        if (globalStatus.includes('3. atras') || globalStatus.includes('risco') || globalStatus.includes('atraso')) {
+            return { status: 'attention', label: 'Atraso / Risco', color: 'amber', pendingCount };
         }
-        if (globalStatus.includes('andamento') || globalStatus.includes('progresso') || globalStatus.includes('ativo')) {
+        if (globalStatus.includes('andamento') || globalStatus.includes('progress') || globalStatus.includes('ativo') || globalStatus.includes('assistida') || globalStatus.includes('implanta')) {
             return { status: 'ok', label: 'Em Andamento', color: 'teal', pendingCount };
         }
 
@@ -1140,13 +1140,16 @@ const App = {
 
         // Core KPIs
         const totalOps = spes.length;
-        const inOnboarding = spes.filter(s => (s.status_jornada_cliente || '').toLowerCase().includes('onboarding')).length;
+        const inOnboarding = spes.filter(s => {
+            const status = (s.status_jornada_cliente || '').toLowerCase();
+            return status && !status.includes('5. conclu');
+        }).length;
 
-        // Critical Pending: SPEs with any blocked task OR overall "Bloqueado" status
+        // Critical Pending: SPEs with any blocked task OR relevant status
         const withPendencies = spes.filter(s => {
             const hasBlockedTask = s.tasks.some(t => (t.status_tarefa || '').toLowerCase().includes('bloq'));
-            const isBlockedGlobal = (s.status_jornada_cliente || '').toLowerCase().includes('bloq');
-            return hasBlockedTask || isBlockedGlobal;
+            const isDelayed = (s.status_jornada_cliente || '').includes('3. Atrasado');
+            return hasBlockedTask || isDelayed;
         });
 
         // Average TTV (using kpi_ttv_dias_corridos from the process level)
@@ -1174,7 +1177,7 @@ const App = {
         // External Causes (Client Pending)
         const clientPendingTasks = data.filter(t =>
             (t.status_tarefa || '').toLowerCase().includes('bloq') &&
-            (t.causa_bloqueio || '').toLowerCase().includes('cliente')
+            (t.responsabilidade || '').toLowerCase().includes('cliente')
         );
 
         container.innerHTML = `
