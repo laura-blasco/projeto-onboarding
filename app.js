@@ -430,6 +430,33 @@ const App = {
         }));
     },
 
+    groupBySPE(data) {
+        const map = {};
+        data.forEach(t => {
+            const spe = t.razao_social_da_spe || 'N/A';
+            if (!map[spe]) {
+                map[spe] = {
+                    name: spe,
+                    razao_social_cliente: t.razao_social_cliente,
+                    status_jornada_cliente: t.status_jornada_cliente,
+                    fase_da_spe: t.fase_da_spe,
+                    start: t.data_kick_off || t.data_inicio_jornada || t.criacao_tarefa,
+                    end: t.data_conclusao || t.data_previsao_entrega || t.data_prazo_sla,
+                    kpi_ttv_dias_corridos: t.kpi_ttv_dias_corridos,
+                    tasks: []
+                };
+            }
+            map[spe].tasks.push(t);
+        });
+
+        // Post-process statuses
+        Object.values(map).forEach(spe => {
+            spe.healthStatus = this.getSpeStatus(spe.tasks);
+        });
+
+        return map;
+    },
+
     // ============================================================
     // 3. RENDERIZAÇÃO (Router de Views)
     // ============================================================
@@ -1681,7 +1708,22 @@ const App = {
     renderDailyCard(spe) {
         const lastNote = (this.state.journals[spe.name] || []).filter(j => j.type === 'DAILY').slice(-1)[0];
         const status = spe.healthStatus;
-        const blockers = spe.tasks.filter(t => (t.status_real || '').toLowerCase().includes('bloq') && !t.is_done);
+
+        // Group tasks by esteira to show complexity
+        const esteiraStats = {};
+        spe.tasks.forEach(t => {
+            const e = t.esteira || 'Geral';
+            if (!esteiraStats[e]) esteiraStats[e] = { name: e, tasks: [] };
+            esteiraStats[e].tasks.push(t);
+        });
+
+        const sortedEsteiras = Object.values(esteiraStats).map(e => ({
+            ...e,
+            status: this.getSpeStatus(e.tasks)
+        })).sort((a, b) => {
+            const scores = { risk: 10, attention: 5, ok: 2, healthy: 1, unknown: 0 };
+            return (scores[b.status.status] || 0) - (scores[a.status.status] || 0);
+        });
 
         return `
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:border-indigo-300 transition-all">
@@ -1693,7 +1735,7 @@ const App = {
                         <div>
                             <h4 class="font-bold text-slate-800">${this.escapeHtml(spe.name)}</h4>
                             <div class="flex items-center gap-2 mt-1">
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${status.color === 'red' ? 'bg-red-100 text-red-700' : status.color === 'amber' ? 'bg-amber-100 text-amber-700' : status.color === 'green' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${status.color === 'red' ? 'bg-red-100 text-red-700' : status.color === 'amber' ? 'bg-amber-100 text-amber-700' : status.color === 'emerald' || status.color === 'green' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}">
                                     ${status.label}
                                 </span>
                                 <span class="text-[10px] text-slate-400 font-medium">${spe.fase}</span>
@@ -1717,27 +1759,23 @@ const App = {
                 <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                         <h5 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase mb-3">
-                            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs"></i> Bloqueios & Pendências Críticas
+                            <i class="fa-solid fa-layer-group text-slate-400 text-xs"></i> Saúde por Esteira / Setor
                         </h5>
-                        ${blockers.length > 0 ? `
-                            <div class="space-y-2">
-                                ${blockers.slice(0, 3).map(b => `
-                                    <div class="flex items-start gap-2 text-xs text-slate-700 bg-red-50/50 p-2.5 rounded-lg border border-red-100/50">
-                                        <div class="mt-0.5"><i class="fa-solid fa-ban text-red-500 text-[10px]"></i></div>
-                                        <div>
-                                            <p class="font-semibold leading-tight">${this.escapeHtml(b.nome_tarefa)}</p>
-                                            <p class="text-[10px] text-slate-500 mt-1">Resp: ${this.escapeHtml(b.responsabilidade)}</p>
-                                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            ${sortedEsteiras.map(est => {
+            let badgeClass = 'bg-slate-50 text-slate-500 border-slate-100';
+            if (est.status.status === 'risk') badgeClass = 'bg-rose-50 text-rose-700 border-rose-100';
+            else if (est.status.status === 'attention') badgeClass = 'bg-amber-50 text-amber-700 border-amber-100';
+            else if (est.status.status === 'ok' || est.status.status === 'healthy') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+
+            return `
+                                    <div class="p-2 rounded-lg border ${badgeClass} flex flex-col items-center text-center">
+                                        <span class="text-[10px] font-bold truncate w-full" title="${est.name}">${est.name}</span>
+                                        <span class="text-[9px] font-medium opacity-80 mt-1">${est.status.label}</span>
                                     </div>
-                                `).join('')}
-                                ${blockers.length > 3 ? `<p class="text-[10px] text-slate-400 italic mt-2 ml-1">+ ${blockers.length - 3} outros bloqueios técnicos</p>` : ''}
-                            </div>
-                        ` : `
-                            <div class="flex flex-col items-center justify-center p-6 border border-dashed border-slate-100 rounded-lg bg-slate-50/50">
-                                <i class="fa-solid fa-check-circle text-emerald-400 text-xl mb-2"></i>
-                                <span class="text-xs text-slate-400 italic">Operação rodando sem pontos de bloqueio.</span>
-                            </div>
-                        `}
+                                `;
+        }).join('')}
+                        </div>
                     </div>
                     
                     <div class="flex flex-col">
