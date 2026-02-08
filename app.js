@@ -117,6 +117,7 @@ const App = {
     // Definição dos Marcos de Jornada (TtV)
     milestoneConfig: [
         { key: 'data_kick_off_cliente', label: 'Kick-off', icon: 'fa-rocket' },
+        { key: 'data_handover_comercial', label: 'Handover', icon: 'fa-handshake' },
         { key: 'data_apresentacao_viabilidade', label: 'Viabilidade', icon: 'fa-check-circle' },
         { key: 'data_inicio_financeira', label: 'Financeira', icon: 'fa-dollar-sign' },
         { key: 'data_inicio_carteira', label: 'Carteira', icon: 'fa-briefcase' }
@@ -1026,20 +1027,49 @@ const App = {
                     </div>
                     
                     <div class="cadastro-section">
-                        <h4><i class="fa-solid fa-tags mr-2 text-teal-600"></i>Contrato</h4>
+                        <h4><i class="fa-solid fa-tags mr-2 text-teal-600"></i>Contrato & Jornada</h4>
                         <div class="cadastro-field">
-                            <label>Fase</label>
-                            <span>${speInfo.fase_da_spe || '-'}</span>
+                            <label>Status Geral</label>
+                            <span class="font-bold text-indigo-600">${speInfo.status_jornada_cliente || '-'}</span>
                         </div>
                         <div class="cadastro-field">
-                            <label>Serviços Contratados</label>
-                            <span>${speInfo.servicos_contratados || '-'}</span>
+                            <label>Fase Atual</label>
+                            <span>${speInfo.fase_da_spe || '-'}</span>
                         </div>
                         <div class="cadastro-field">
                             <label>SLA Padrão</label>
                             <span>${speInfo.sla_dias_uteis_padrao || 5} dias úteis</span>
                         </div>
+                        <div class="cadastro-field">
+                            <label>TTV (Dias Corridos)</label>
+                            <span class="badge badge-info">${speInfo.kpi_ttv_dias_corridos || 0} dias</span>
+                        </div>
                     </div>
+
+                    <div class="cadastro-section">
+                        <h4><i class="fa-solid fa-calendar-check mr-2 text-teal-600"></i>Marcos Analíticos</h4>
+                        <div class="cadastro-field">
+                            <label>Handover Comercial</label>
+                            <span>${speInfo.data_handover_comercial ? WorkingHoursEngine.formatDate(speInfo.data_handover_comercial) : '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Kick-off Cliente</label>
+                            <span>${speInfo.data_kick_off_cliente ? WorkingHoursEngine.formatDate(speInfo.data_kick_off_cliente) : '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Viabilidade</label>
+                            <span>${speInfo.data_apresentacao_viabilidade ? WorkingHoursEngine.formatDate(speInfo.data_apresentacao_viabilidade) : '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Financeira</label>
+                            <span>${speInfo.data_inicio_financeira ? WorkingHoursEngine.formatDate(speInfo.data_inicio_financeira) : '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Carteira</label>
+                            <span>${speInfo.data_inicio_carteira ? WorkingHoursEngine.formatDate(speInfo.data_inicio_carteira) : '-'}</span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         `;
@@ -1483,23 +1513,28 @@ const App = {
         const uniqueSPEs = [...new Set(data.map(d => d.razao_social_da_spe))];
         const totalSPEs = uniqueSPEs.length;
 
-        // Status counts for companies (per SPE, not per task)
+        // Status counts for companies (per SPE, using status_jornada_cliente)
         const speStatusMap = {};
         data.forEach(d => {
             const spe = d.razao_social_da_spe;
             if (!speStatusMap[spe]) {
-                speStatusMap[spe] = { delayed: false, blocked: false, done: false };
+                const status = (d.status_jornada_cliente || d.status_global_processo || '').toLowerCase();
+                let statusType = 'onTrack';
+
+                if (status.includes('conclu') || status.includes('finaliz')) statusType = 'completed';
+                else if (status.includes('bloq') || status.includes('parado') || status.includes('suspen')) statusType = 'blocked';
+                else if (status.includes('risco') || status.includes('atras') || status.includes('atraso')) statusType = 'atRisk';
+
+                speStatusMap[spe] = statusType;
             }
-            if (d.is_delayed) speStatusMap[spe].delayed = true;
-            if ((d.status_real || '').toLowerCase().includes('bloq')) speStatusMap[spe].blocked = true;
-            if (d.is_done) speStatusMap[spe].done = true;
         });
 
         const speStatusCounts = {
-            onTrack: Object.values(speStatusMap).filter(s => !s.delayed && !s.blocked).length,
-            atRisk: Object.values(speStatusMap).filter(s => s.delayed && !s.blocked).length,
-            blocked: Object.values(speStatusMap).filter(s => s.blocked).length,
-            completed: Object.values(speStatusMap).filter(s => s.done && !s.delayed && !s.blocked).length
+            onTrack: Object.values(speStatusMap).filter(s => s === 'onTrack').length,
+            atRisk: Object.values(speStatusMap).filter(s => s === 'atRisk').length,
+            blocked: Object.values(speStatusMap).filter(s => s === 'blocked').length,
+            completed: Object.values(speStatusMap).filter(s => s === 'completed').length,
+            total: Object.keys(speStatusMap).length
         };
 
         // Time since kickoff (days open)
