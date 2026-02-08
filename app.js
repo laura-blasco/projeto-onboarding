@@ -99,7 +99,9 @@ const App = {
         activeDate: null, // Data ativa para modais
         chartInstances: {}, // Instâncias de Chart.js para destruição
         activeSpeName: null, // SPE selecionada na visão Operação
-        activeTab: 'diario' // Aba ativa na visão Operação (diario, cronograma, cadastro)
+        activeTab: 'diario', // Aba ativa na visão Operação (diario, cronograma, cadastro)
+        filterPendenciasSpe: '', // Filtro local para Pendências
+        filterPendenciasEsteira: '' // Filtro local para Pendências
     },
 
     // Mapa de títulos para breadcrumb
@@ -1368,8 +1370,21 @@ const App = {
         const pending = data.filter(d => !d.is_done);
         const today = new Date();
 
+        // Apply Local Filters
+        let filteredPending = pending;
+        if (this.state.filterPendenciasSpe) {
+            filteredPending = filteredPending.filter(p => p.razao_social_da_spe === this.state.filterPendenciasSpe);
+        }
+        if (this.state.filterPendenciasEsteira) {
+            filteredPending = filteredPending.filter(p => p.esteira === this.state.filterPendenciasEsteira);
+        }
+
+        // Options for the filters
+        const availableSpes = [...new Set(pending.map(p => p.razao_social_da_spe))].sort();
+        const availableEsteiras = [...new Set(pending.map(p => p.esteira))].sort();
+
         // Calculate days delayed
-        const pendenciasWithDelay = pending.map(d => {
+        const pendenciasWithDelay = filteredPending.map(d => {
             let diasAtraso = 0;
             if (d.data_prazo_sla) {
                 const prazo = new Date(d.data_prazo_sla + 'T00:00:00');
@@ -1379,12 +1394,48 @@ const App = {
         }).sort((a, b) => b.diasAtraso - a.diasAtraso);
 
         container.innerHTML = `
-            <div class="fade-in">
+            <div class="fade-in px-2">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Pendências de Atividades</h2>
+                        <p class="text-sm text-slate-500">Gestão de tarefas em aberto e controle de atrasos.</p>
+                    </div>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-6 flex flex-wrap gap-6 items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-building text-slate-400"></i>
+                            <span class="text-sm font-semibold text-slate-600">Empresa:</span>
+                        </div>
+                        <select onchange="App.setPendenciasFilter('filterPendenciasSpe', this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]">
+                            <option value="">Todas as Empresas</option>
+                            ${availableSpes.map(s => `<option value="${this.escapeAttr(s)}" ${this.state.filterPendenciasSpe === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-stream text-slate-400"></i>
+                            <span class="text-sm font-semibold text-slate-600">Esteira:</span>
+                        </div>
+                        <select onchange="App.setPendenciasFilter('filterPendenciasEsteira', this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]">
+                            <option value="">Todas as Esteiras</option>
+                            ${availableEsteiras.map(e => `<option value="${this.escapeAttr(e)}" ${this.state.filterPendenciasEsteira === e ? 'selected' : ''}>${this.escapeHtml(e)}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="ml-auto text-xs text-slate-400">
+                        Exibindo <strong>${filteredPending.length}</strong> de ${pending.length} pendências globais
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800"><i class="fa-solid fa-exclamation-triangle mr-2 text-amber-500"></i>Tarefas Pendentes (${pending.length})</h3>
+                        <h3 class="font-bold text-slate-800"><i class="fa-solid fa-exclamation-triangle mr-2 text-amber-500"></i>Tarefas Pendentes (${filteredPending.length})</h3>
                         <div class="text-sm text-slate-500">
-                            <span class="text-red-600 font-semibold">${pending.filter(p => p.is_delayed).length}</span> em atraso
+                            <span class="text-red-600 font-semibold">${filteredPending.filter(p => p.is_delayed).length}</span> em atraso
                         </div>
                     </div>
                     ${pending.length === 0 ? `
@@ -1435,6 +1486,12 @@ const App = {
             </div>
         `;
     },
+
+    setPendenciasFilter(filterKey, value) {
+        this.state[filterKey] = value;
+        this.render();
+    },
+
 
     // --- VIEW: DAILY OPERACIONAL (New) ---
     renderDaily(container) {
