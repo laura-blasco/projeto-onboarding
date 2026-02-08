@@ -2108,11 +2108,20 @@ const App = {
             const row = document.createElement('div');
             row.className = 'gantt-row';
             row.innerHTML = `
-                <div class="gantt-row-label" onclick="App.toggleGanttRow('${this.escapeAttr(spe.name)}')">
-                    <span class="gantt-expand-btn">
-                        <i class="fa-solid fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
-                    </span>
-                    <span class="truncate">${spe.name}</span>
+                <div class="gantt-row-label">
+                    <div class="flex items-center flex-1 h-full min-w-0" onclick="App.toggleGanttRow('${this.escapeAttr(spe.name)}')">
+                        <span class="gantt-expand-btn">
+                            <i class="fa-solid fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
+                        </span>
+                        <span class="truncate">${spe.name}</span>
+                    </div>
+                    ${spe.start ? `
+                        <button onclick="App.goToSpeKickoff('${this.escapeAttr(spe.name)}', '${spe.start}')" 
+                                class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                                title="Ir para o Kick-off">
+                            <i class="fa-solid fa-house-chimney text-xs"></i>
+                        </button>
+                    ` : ''}
                 </div>
                 <div class="gantt-row-grid">
                     ${this.renderGanttBar(spe.start, spe.end, spe.status, spe.name, year, month, daysInMonth)}
@@ -2120,35 +2129,29 @@ const App = {
             `;
             timeline.appendChild(row);
 
-            // Render Sub-Rows (Tasks) if expanded
+            // Render Sub-Rows (Esteiras) if expanded
             if (isExpanded) {
-                // Group by esteira for cleaner view
-                const esteiras = {};
-                spe.tasks.forEach(t => {
-                    const e = t.esteira || 'Geral';
-                    if (!esteiras[e]) esteiras[e] = { name: e, start: null, end: null, tasks: [] };
-                    esteiras[e].tasks.push(t);
-                });
+                // Determine source of tracks: use the analytical esteiras array from the parent data if possible
+                const parentSpe = this.state.data.find(d => d.razao_social_da_spe === spe.name);
+                const esteiras = parentSpe?.esteiras || [];
 
-                Object.values(esteiras).forEach(est => {
-                    const estStart = est.tasks.reduce((min, t) => {
-                        const s = t.data_inicio_jornada || t.criacao_tarefa;
-                        return (s && (!min || s < min)) ? s : min;
-                    }, null);
-                    const estEnd = est.tasks.reduce((max, t) => {
-                        const s = t.conclusao_tarefa || t.data_prazo_sla;
-                        return (s && (!max || s > max)) ? s : max;
-                    }, null);
+                const tracksToRender = esteiras.length > 0 ? esteiras : this.groupTasksIntoTracks(spe.tasks);
+
+                tracksToRender.forEach(est => {
+                    const estStart = est.data_inicio || this.getMinDate(est.tasks || [], 'data_inicio_jornada', 'criacao_tarefa');
+                    const estEnd = est.data_conclusao || est.data_previsao_entrega || this.getMaxDate(est.tasks || [], 'conclusao_tarefa', 'data_prazo_sla');
+
+                    if (!estStart || !estEnd) return;
 
                     const subRow = document.createElement('div');
                     subRow.className = 'gantt-row gantt-sub-row';
                     subRow.innerHTML = `
                         <div class="gantt-row-label">
                             <i class="fa-solid fa-arrow-turn-up rotate-90 scale-75 mr-2 opacity-50"></i>
-                            <span class="truncate">${est.name}</span>
+                            <span class="truncate">${est.esteira || est.name}</span>
                         </div>
                         <div class="gantt-row-grid">
-                            ${this.renderGanttBar(estStart, estEnd, 'sub', est.name, year, month, daysInMonth, true)}
+                            ${this.renderGanttBar(estStart, estEnd, 'sub', est.esteira || est.name, year, month, daysInMonth, true)}
                         </div>
                     `;
                     timeline.appendChild(subRow);
@@ -2221,6 +2224,66 @@ const App = {
     toggleGanttRow(speName) {
         this.state.expandedItems[speName] = !this.state.expandedItems[speName];
         this.render();
+    },
+
+    goToSpeKickoff(speName, kickOffDate) {
+        const date = new Date(kickOffDate + 'T00:00:00');
+        const colWidth = 40;
+
+        // Toggle month if different
+        if (date.getMonth() !== this.state.currentMonth.getMonth() || date.getFullYear() !== this.state.currentMonth.getFullYear()) {
+            this.state.currentMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            this.render();
+        }
+
+        // Wait for render and scroll
+        setTimeout(() => {
+            const timeline = document.getElementById('gantt-timeline');
+            if (timeline) {
+                const scrollPos = (date.getDate() - 2) * colWidth;
+                timeline.scrollLeft = Math.max(0, scrollPos);
+
+                // Visual Highlight on labels
+                const labels = document.querySelectorAll('.gantt-row-label');
+                labels.forEach(l => {
+                    if (l.innerText.includes(speName)) {
+                        l.classList.add('bg-indigo-50');
+                        setTimeout(() => l.classList.remove('bg-indigo-50'), 2000);
+                    }
+                });
+            }
+        }, 150);
+    },
+
+    // Helper to group tasks when no esteira structure exists
+    groupTasksIntoTracks(tasks) {
+        const esteiras = {};
+        tasks.forEach(t => {
+            const e = t.esteira || 'Geral';
+            if (!esteiras[e]) esteiras[e] = { esteira: e, tasks: [] };
+            esteiras[e].tasks.push(t);
+        });
+        return Object.values(esteiras);
+    },
+
+    getMinDate(tasks, ...keys) {
+        return tasks.reduce((min, t) => {
+            for (let key of keys) {
+                const s = t[key];
+                if (s && (!min || s < min)) min = s;
+            }
+            return min;
+        }, null);
+    },
+
+    getMaxDate(tasks, ...keys) {
+        return tasks.reduce((max, t) => {
+            for (let key of keys) {
+                const s = t[key];
+                if (s && (!max || s > max)) max = s;
+            }
+            return max;
+        }, null);
     },
 
 
@@ -2755,6 +2818,7 @@ const App = {
             const n = this.normalizeKeys(row);
             const processId = n.process_id || '';
             const esteiraName = n.esteira || n.nome || n.nome_esteira || 'Geral';
+            const dataInicio = this.parseExcelDate(n.data_inicio);
             const dataPrevisao = this.parseExcelDate(n.data_previsao_entrega);
             const dataConclusao = this.parseExcelDate(n.data_conclusao);
             const slaDias = parseInt(n.sla_esteira_dias || n.sla_total || n.sla) || null;
@@ -2770,6 +2834,7 @@ const App = {
                 esteira: esteiraName,
                 status_esteira_detalhado: statusEsteira,
                 sla_esteira_dias: slaDias, // SLA in days for this track
+                data_inicio: dataInicio,
                 data_previsao_entrega: dataPrevisao,
                 data_conclusao: dataConclusao,
                 is_completed: isCompleted,
