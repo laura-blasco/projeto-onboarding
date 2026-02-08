@@ -111,15 +111,17 @@ const App = {
         'sla': 'SLA & Tempo',
         'pendencias': 'Pendências',
         'company': 'Empresa',
-        'calendario': 'Calendário'
+        'calendario': 'Calendário',
+        'daily': 'Daily Operacional'
     },
 
     // Definição dos Marcos de Jornada (TtV)
     milestoneConfig: [
-        { key: 'data_kick_off_cliente', label: 'Kick-off', icon: 'fa-rocket' },
+        { key: 'data_inicio_contrato', label: 'Assinatura', icon: 'fa-file-signature' },
         { key: 'data_handover_comercial', label: 'Handover', icon: 'fa-handshake' },
+        { key: 'data_kick_off_cliente', label: 'Kick-off', icon: 'fa-rocket' },
         { key: 'data_apresentacao_viabilidade', label: 'Viabilidade', icon: 'fa-check-circle' },
-        { key: 'data_inicio_financeira', label: 'Financeira', icon: 'fa-dollar-sign' },
+        { key: 'data_inicio_financeira', label: 'Financeiro', icon: 'fa-dollar-sign' },
         { key: 'data_inicio_carteira', label: 'Carteira', icon: 'fa-briefcase' }
     ],
 
@@ -271,8 +273,22 @@ const App = {
         if (!speData || speData.length === 0) return [];
         const today = new Date().toISOString().split('T')[0];
         const spe = speData[0]; // Usar primeira tarefa para dados da SPE
+        const services = spe.servicos_contratados || [];
 
-        return this.milestoneConfig.map((m, index) => {
+        // Filtrar marcos aplicáveis (Regra: Carteira apenas se contratado)
+        const applicableConfig = this.milestoneConfig.filter(m => {
+            if (m.key === 'data_inicio_carteira') {
+                const hasService = services.some(s =>
+                    s.toLowerCase().includes('carteira') ||
+                    s.toLowerCase().includes('comercial') ||
+                    s.toLowerCase().includes('pós-venda')
+                );
+                return hasService || spe.data_inicio_carteira;
+            }
+            return true;
+        });
+
+        return applicableConfig.map((m, index) => {
             const dateValue = spe[m.key];
             let status = 'pending'; // Padrão: pendente
 
@@ -281,9 +297,8 @@ const App = {
                 status = dateValue <= today ? 'done' : 'pending';
             } else {
                 // Data não existe - verificar se deveria existir (SLA estourado)
-                // Lógica: se o marco anterior está done e passaram mais de 15 dias úteis
                 if (index > 0) {
-                    const prevMilestone = this.milestoneConfig[index - 1];
+                    const prevMilestone = applicableConfig[index - 1];
                     const prevDate = spe[prevMilestone.key];
                     if (prevDate && prevDate <= today) {
                         const expectedDate = WorkingHoursEngine.addWorkingDays(prevDate, 15);
@@ -301,6 +316,7 @@ const App = {
             };
         });
     },
+
 
     // Calcula status de saúde da SPE baseado nas tarefas
     getSpeStatus(speData) {
@@ -447,6 +463,9 @@ const App = {
                 break;
             case 'calendario':
                 this.renderCalendar(container);
+                break;
+            case 'daily':
+                this.renderDaily(container);
                 break;
             default:
                 this.renderCarteira(container);
@@ -1049,6 +1068,10 @@ const App = {
                     <div class="cadastro-section">
                         <h4><i class="fa-solid fa-calendar-check mr-2 text-teal-600"></i>Marcos Analíticos</h4>
                         <div class="cadastro-field">
+                            <label>Assinatura do Contrato</label>
+                            <span>${speInfo.data_inicio_contrato ? WorkingHoursEngine.formatDate(speInfo.data_inicio_contrato) : '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
                             <label>Handover Comercial</label>
                             <span>${speInfo.data_handover_comercial ? WorkingHoursEngine.formatDate(speInfo.data_handover_comercial) : '-'}</span>
                         </div>
@@ -1069,6 +1092,7 @@ const App = {
                             <span>${speInfo.data_inicio_carteira ? WorkingHoursEngine.formatDate(speInfo.data_inicio_carteira) : '-'}</span>
                         </div>
                     </div>
+
 
                 </div>
             </div>
@@ -1411,6 +1435,189 @@ const App = {
             </div>
         `;
     },
+
+    // --- VIEW: DAILY OPERACIONAL (New) ---
+    renderDaily(container) {
+        const data = this.getFilteredData();
+        const clients = this.groupByClientAndSpe();
+
+        // Local filter state for status in this view
+        if (this.state.filterDailyStatus === undefined) this.state.filterDailyStatus = '';
+
+        container.innerHTML = `
+            <div class="fade-in px-2">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Daily Operacional</h2>
+                        <p class="text-sm text-slate-500">Acompanhamento de projetos e registro de decisões.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-6 flex flex-wrap gap-4 items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-slate-400"></i>
+                        <span class="text-sm font-semibold text-slate-600">Filtro de Status:</span>
+                    </div>
+                    
+                    <select onchange="App.setDailyStatusFilter(this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Todos os Status</option>
+                        <option value="risk" ${this.state.filterDailyStatus === 'risk' ? 'selected' : ''}>Bloqueado / Risco Crítico</option>
+                        <option value="attention" ${this.state.filterDailyStatus === 'attention' ? 'selected' : ''}>Em Atenção / Atraso</option>
+                        <option value="ok" ${this.state.filterDailyStatus === 'ok' ? 'selected' : ''}>Em Andamento (OK)</option>
+                        <option value="healthy" ${this.state.filterDailyStatus === 'healthy' ? 'selected' : ''}>Concluído / Ativo</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    ${this.renderDailyList(clients)}
+                </div>
+            </div>
+        `;
+    },
+
+    setDailyStatusFilter(status) {
+        this.state.filterDailyStatus = status;
+        this.render();
+    },
+
+    renderDailyList(clients) {
+        let html = '';
+        clients.forEach(client => {
+            const filteredSpes = client.spes.filter(spe => {
+                if (!this.state.filterDailyStatus) return true;
+                return spe.healthStatus.status === this.state.filterDailyStatus;
+            });
+
+            if (filteredSpes.length === 0) return;
+
+            html += `
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1 border-l-2 border-indigo-500 ml-1 pl-3">${client.name}</h3>
+                    <div class="space-y-4">
+                        ${filteredSpes.map(spe => this.renderDailyCard(spe)).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        return html || '<div class="text-center p-12 text-slate-400 border-2 border-dashed rounded-xl">Nenhum projeto encontrado com os filtros atuais.</div>';
+    },
+
+    renderDailyCard(spe) {
+        const lastNote = (this.state.journals[spe.name] || []).filter(j => j.type === 'DAILY').slice(-1)[0];
+        const status = spe.healthStatus;
+        const blockers = spe.tasks.filter(t => (t.status_real || '').toLowerCase().includes('bloq') && !t.is_done);
+
+        return `
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:border-indigo-300 transition-all">
+                <div class="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-50 bg-slate-50/30">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                             <i class="fa-solid fa-building text-indigo-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800">${this.escapeHtml(spe.name)}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${status.color === 'red' ? 'bg-red-100 text-red-700' : status.color === 'amber' ? 'bg-amber-100 text-amber-700' : status.color === 'green' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}">
+                                    ${status.label}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-medium">${spe.fase}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Última Daily</div>
+                             <div class="text-xs font-semibold text-slate-600">
+                                ${lastNote ? WorkingHoursEngine.formatDate(lastNote.date) : '<span class="text-slate-300">Nunca</span>'}
+                             </div>
+                        </div>
+                        <button onclick="App.setView('company', { spe: '${this.escapeAttr(spe.name)}' })" class="u-btn bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs px-3 py-1.5 shadow-sm">
+                            Detalhes <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase mb-3">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs"></i> Bloqueios & Pendências Críticas
+                        </h5>
+                        ${blockers.length > 0 ? `
+                            <div class="space-y-2">
+                                ${blockers.slice(0, 3).map(b => `
+                                    <div class="flex items-start gap-2 text-xs text-slate-700 bg-red-50/50 p-2.5 rounded-lg border border-red-100/50">
+                                        <div class="mt-0.5"><i class="fa-solid fa-ban text-red-500 text-[10px]"></i></div>
+                                        <div>
+                                            <p class="font-semibold leading-tight">${this.escapeHtml(b.nome_tarefa)}</p>
+                                            <p class="text-[10px] text-slate-500 mt-1">Resp: ${this.escapeHtml(b.responsabilidade)}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${blockers.length > 3 ? `<p class="text-[10px] text-slate-400 italic mt-2 ml-1">+ ${blockers.length - 3} outros bloqueios técnicos</p>` : ''}
+                            </div>
+                        ` : `
+                            <div class="flex flex-col items-center justify-center p-6 border border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                                <i class="fa-solid fa-check-circle text-emerald-400 text-xl mb-2"></i>
+                                <span class="text-xs text-slate-400 italic">Operação rodando sem pontos de bloqueio.</span>
+                            </div>
+                        `}
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <h5 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase mb-3">
+                            <i class="fa-solid fa-pen-to-square text-indigo-500 text-xs"></i> Registro de Decisão / Daily Log
+                        </h5>
+                        <div class="flex flex-col gap-3 flex-1">
+                            <textarea 
+                                id="daily-note-${this.escapeAttr(spe.name)}"
+                                class="w-full text-xs border border-slate-200 rounded-lg p-3 h-28 focus:ring-2 focus:ring-indigo-500 outline-none resize-none shadow-inner bg-slate-50/20"
+                                placeholder="Registre aqui as decisões acordadas na daily, próximos passos críticos ou alinhamentos para resolução..."
+                            >${lastNote ? this.escapeHtml(lastNote.text) : ''}</textarea>
+                            <button 
+                                id="btn-save-daily-${this.escapeAttr(spe.name)}"
+                                onclick="App.saveDailyLog('${this.escapeAttr(spe.name)}')"
+                                class="u-btn u-btn-primary self-end py-1.5 px-4 text-[10px] font-bold uppercase tracking-wider shadow-md active:scale-95 transition-transform"
+                            >
+                                <i class="fa-solid fa-save mr-1"></i> Salvar Registro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    saveDailyLog(speName) {
+        const text = document.getElementById(`daily-note-${speName}`).value;
+        const btn = document.getElementById(`btn-save-daily-${speName}`);
+
+        if (!text.trim()) {
+            btn.classList.add('shake');
+            setTimeout(() => btn.classList.remove('shake'), 500);
+            return;
+        }
+
+        this.saveJournalEntry(speName, {
+            text: text,
+            type: 'DAILY',
+            date: new Date().toISOString().split('T')[0]
+        });
+
+        // Visual Feedback
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvo com Sucesso';
+        btn.classList.remove('u-btn-primary');
+        btn.classList.add('bg-emerald-500', 'text-white');
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('bg-emerald-500', 'text-white');
+            btn.classList.add('u-btn-primary');
+        }, 2000);
+    },
+
 
     // --- VIEW: DRILL-DOWN (Empresa/SPE) ---
     renderCompanyDrilldown(container) {
@@ -2665,6 +2872,9 @@ const App = {
             </li>
             <li id="menu-calendario" class="sidebar-menu-item" onclick="App.setView('calendario')">
                 <i class="fa-solid fa-calendar-days"></i> <span>Calendário</span>
+            </li>
+            <li id="menu-daily" class="sidebar-menu-item" onclick="App.setView('daily')">
+                <i class="fa-solid fa-clipboard-check"></i> <span>Daily Operacional</span>
             </li>
             
             <li class="sidebar-section">RELATÓRIOS</li>
