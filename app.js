@@ -494,6 +494,9 @@ const App = {
             case 'daily':
                 this.renderDaily(container);
                 break;
+            case 'daily-history':
+                this.renderDailyHistory(container);
+                break;
             default:
                 this.renderCarteira(container);
         }
@@ -1823,7 +1826,23 @@ const App = {
 
                         <!-- Add Action Form -->
                         <div class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50">
-                            <div class="grid grid-cols-3 gap-2 mb-2">
+                            <!-- Toggle Type -->
+                            <div class="flex p-0.5 bg-slate-200/50 rounded-lg mb-3 w-fit">
+                                <button 
+                                    onclick="App.setEntryType('${this.escapeAttr(spe.name)}', 'todo')" 
+                                    class="px-3 py-1 text-[10px] font-bold rounded-md transition-all ${this.state.entryMode?.[spe.name] !== 'report' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+                                >
+                                    <i class="fa-solid fa-list-check mr-1"></i> Ação (To-do)
+                                </button>
+                                <button 
+                                    onclick="App.setEntryType('${this.escapeAttr(spe.name)}', 'report')" 
+                                    class="px-3 py-1 text-[10px] font-bold rounded-md transition-all ${this.state.entryMode?.[spe.name] === 'report' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}"
+                                >
+                                    <i class="fa-solid fa-note-sticky mr-1"></i> Relato (Report)
+                                </button>
+                            </div>
+
+                            <div id="form-fields-${this.escapeAttr(spe.name)}" class="${this.state.entryMode?.[spe.name] === 'report' ? 'hidden' : 'grid'} grid-cols-3 gap-2 mb-2">
                                 <select id="action-esteira-${this.escapeAttr(spe.name)}" class="text-[10px] font-bold border-slate-200 rounded p-1.5 outline-none focus:ring-1 focus:ring-indigo-500">
                                     ${sortedEsteiras.map(e => `<option value="${this.escapeAttr(e.name)}">${this.escapeHtml(e.name)}</option>`).join('')}
                                     <option value="Geral">Geral</option>
@@ -1832,7 +1851,7 @@ const App = {
                                 <input id="action-prazo-${this.escapeAttr(spe.name)}" type="date" class="text-[10px] border-slate-200 rounded p-1.5 outline-none focus:ring-1 focus:ring-indigo-500">
                             </div>
                             <div class="flex gap-2">
-                                <input id="action-text-${this.escapeAttr(spe.name)}" type="text" placeholder="Descreva a ação ou pendência..." class="flex-1 text-xs border-slate-200 rounded p-2 outline-none focus:ring-1 focus:ring-indigo-500">
+                                <input id="action-text-${this.escapeAttr(spe.name)}" type="text" placeholder="${this.state.entryMode?.[spe.name] === 'report' ? 'Descreva o relato ou alinhamento geral...' : 'Descreva a ação ou pendência...'}" class="flex-1 text-xs border-slate-200 rounded p-2 outline-none focus:ring-1 focus:ring-indigo-500">
                                 <button 
                                     onclick="App.addDailyAction('${this.escapeAttr(spe.name)}')"
                                     class="bg-indigo-600 text-white rounded-lg px-3 py-2 text-xs font-bold shadow-sm hover:bg-indigo-700 active:scale-95 transition-all"
@@ -1847,24 +1866,41 @@ const App = {
         `;
     },
 
+    setEntryType(speName, type) {
+        if (!this.state.entryMode) this.state.entryMode = {};
+        this.state.entryMode[speName] = type;
+        this.render();
+    },
+
     addDailyAction(speName) {
         const textEl = document.getElementById(`action-text-${speName}`);
         const respEl = document.getElementById(`action-resp-${speName}`);
         const estEl = document.getElementById(`action-esteira-${speName}`);
         const prazoEl = document.getElementById(`action-prazo-${speName}`);
+        const mode = this.state.entryMode?.[speName] || 'todo';
 
         if (!textEl.value.trim()) return;
 
-        this.saveJournalEntry(speName, {
+        const entry = {
             text: textEl.value,
-            responsavel: respEl.value || 'N/A',
-            esteira: estEl.value,
-            prazo: prazoEl.value || null,
             type: 'DAILY_ACTION',
-            status: 'todo'
-        });
+            subType: mode, // 'todo' or 'report'
+            status: mode === 'todo' ? 'todo' : 'info',
+            date: new Date().toISOString().split('T')[0]
+        };
 
-        // Clear only the text input to keep the others for next entry
+        if (mode === 'todo') {
+            entry.responsavel = respEl.value || 'N/A';
+            entry.esteira = estEl.value;
+            entry.prazo = prazoEl.value || null;
+        } else {
+            entry.esteira = 'Geral';
+            entry.responsavel = 'Sistema';
+        }
+
+        this.saveJournalEntry(speName, entry);
+
+        // Clear input
         textEl.value = '';
     },
 
@@ -3298,6 +3334,9 @@ const App = {
             <li id="menu-daily" class="sidebar-menu-item" onclick="App.setView('daily')">
                 <i class="fa-solid fa-clipboard-check"></i> <span>Daily Operacional</span>
             </li>
+            <li id="menu-daily-history" class="sidebar-menu-item" onclick="App.setView('daily-history')">
+                <i class="fa-solid fa-book-open"></i> <span>Central de Registros</span>
+            </li>
             
             <li class="sidebar-section">RELATÓRIOS</li>
             <li id="menu-overview" class="sidebar-menu-item" onclick="App.setView('overview')">
@@ -3479,6 +3518,179 @@ const App = {
     escapeAttr(str) {
         if (!str) return '';
         return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    },
+
+    getEsteiraColor(name) {
+        const map = { 'Viabilidade': '#3b82f6', 'Jurídico': '#8b5cf6', 'Financeiro': '#10b981', 'Engenharia': '#f59e0b', 'Fiscal': '#ef4444' };
+        return map[name] || '#64748b';
+    },
+
+    renderDailyHistory(container) {
+        const journals = this.state.journals || {};
+        const allEntries = [];
+
+        Object.keys(journals).forEach(speName => {
+            journals[speName].forEach(entry => {
+                if (entry.type === 'DAILY_ACTION') {
+                    allEntries.push({ ...entry, speName });
+                }
+            });
+        });
+
+        // Apply Filters
+        const filterSpe = this.state.historyFilterSpe || '';
+        const filterType = this.state.historyFilterType || '';
+        const filterStatus = this.state.historyFilterStatus || '';
+        const filterSearch = (this.state.historyFilterSearch || '').toLowerCase();
+
+        const filtered = allEntries.filter(e => {
+            if (filterSpe && e.speName !== filterSpe) return false;
+            if (filterType && e.subType !== filterType) return false;
+            if (filterStatus && (e.status === 'done' ? 'done' : 'todo') !== filterStatus) return false;
+            if (filterSearch && !e.text.toLowerCase().includes(filterSearch)) return false;
+            return true;
+        }).sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date));
+
+        const spes = [...new Set(allEntries.map(e => e.speName))].sort();
+
+        container.innerHTML = `
+            <div class="p-6 fade-in max-w-7xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Central de Registros</h2>
+                        <p class="text-slate-500 text-sm mt-1">Histórico global de ações e relatos das dailies operacionais.</p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="md:col-span-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Buscar no Texto</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input 
+                                type="text" 
+                                placeholder="Filtrar por descrição..." 
+                                value="${this.escapeAttr(filterSearch)}"
+                                oninput="App.updateHistoryFilter('search', this.value)"
+                                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/30"
+                            >
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Operação / SPE</label>
+                        <select onchange="App.updateHistoryFilter('spe', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">Todas as SPEs</option>
+                            ${spes.map(s => `<option value="${this.escapeAttr(s)}" ${filterSpe === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo de Registro</label>
+                        <select onchange="App.updateHistoryFilter('type', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">Todos os Tipos</option>
+                            <option value="todo" ${filterType === 'todo' ? 'selected' : ''}>Ação (To-do)</option>
+                            <option value="report" ${filterType === 'report' ? 'selected' : ''}>Relato (Report)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Status de Ação</label>
+                        <select onchange="App.updateHistoryFilter('status', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">Todos os Status</option>
+                            <option value="todo" ${filterStatus === 'todo' ? 'selected' : ''}>Pendente</option>
+                            <option value="done" ${filterStatus === 'done' ? 'selected' : ''}>Concluído</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32 border-r border-slate-100">Data</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-56 border-r border-slate-100">Operação (SPE)</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-r border-slate-100">Responsável</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Descrição Detalhada / Relato Situacional</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-l border-slate-100">Prazo</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 text-center">Controle</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${filtered.map(entry => `
+                                    <tr class="hover:bg-slate-50/50 transition-all">
+                                        <td class="px-6 py-4 text-sm text-slate-500 border-r border-slate-50">${WorkingHoursEngine.formatDate(entry.date)}</td>
+                                        <td class="px-6 py-4 border-r border-slate-50">
+                                            <button onclick="App.setView('company', { spe: '${this.escapeAttr(entry.speName)}' })" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                                ${this.escapeHtml(entry.speName)}
+                                            </button>
+                                        </td>
+                                        <td class="px-6 py-4 border-r border-slate-50">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-600 tracking-tight uppercase">
+                                                <i class="fa-solid fa-user-circle mr-1 text-slate-400"></i> ${this.escapeHtml(entry.responsavel || 'Sistema')}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col gap-1.5">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${this.getEsteiraColorClass(entry.esteira)} uppercase shadow-sm">
+                                                        ${entry.subType === 'report' ? 'Relato' : entry.esteira || 'Geral'}
+                                                    </span>
+                                                    ${entry.subType === 'report' ? '<span class="text-[8px] font-extrabold text-emerald-500 bg-emerald-50 px-1 rounded border border-emerald-100 uppercase tracking-tighter">Informativo</span>' : ''}
+                                                </div>
+                                                <p class="text-sm text-slate-700 leading-snug max-w-2xl ${entry.status === 'done' ? 'line-through opacity-40 italic' : ''}">
+                                                    ${this.escapeHtml(entry.text)}
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 border-l border-slate-50">
+                                            ${entry.prazo ? `
+                                                <div class="flex flex-col">
+                                                    <span class="text-[11px] font-bold text-slate-700">
+                                                        <i class="fa-solid fa-calendar-day mr-1.5 text-slate-300"></i> ${WorkingHoursEngine.formatDate(entry.prazo)}
+                                                    </span>
+                                                    <!-- Optional: indicate if overdue -->
+                                                </div>
+                                            ` : '<span class="text-slate-300 text-xs italic">N/A</span>'}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            ${entry.subType === 'todo' ? `
+                                                <button 
+                                                    onclick="App.toggleDailyAction('${this.escapeAttr(entry.speName)}', ${entry.id})"
+                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full border transition-all ${entry.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white shadow shadow-emerald-200/50' : 'bg-white text-slate-300 border-slate-200 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/30'}"
+                                                    title="${entry.status === 'done' ? 'Marcar como Pendente' : 'Marcar como Concluído'}"
+                                                >
+                                                    <i class="fa-solid ${entry.status === 'done' ? 'fa-check' : 'fa-circle-check text-lg'}"></i>
+                                                </button>
+                                            ` : '<i class="fa-solid fa-info-circle text-slate-200 text-lg" title="Relato Informativo"></i>'}
+                                        </td>
+                                    </tr>
+                                `).join('') || `
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-20 text-center">
+                                            <div class="flex flex-col items-center opacity-40">
+                                                <i class="fa-solid fa-folder-open text-5xl mb-4"></i>
+                                                <p class="text-lg font-medium italic">Nenhum registro encontrado.</p>
+                                                <span class="text-sm mt-1">Tente ajustar seus filtros de busca.</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    updateHistoryFilter(field, value) {
+        if (!this.state.historyFilters) this.state.historyFilters = {}; // Cleanup other state members if preferred
+        if (field === 'spe') this.state.historyFilterSpe = value;
+        if (field === 'type') this.state.historyFilterType = value;
+        if (field === 'status') this.state.historyFilterStatus = value;
+        if (field === 'search') this.state.historyFilterSearch = value;
+        this.render();
     },
 
     getEsteiraColor(name) {
