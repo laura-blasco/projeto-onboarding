@@ -101,20 +101,39 @@ const App = {
         activeSpeName: null, // SPE selecionada na visão Operação
         activeTab: 'diario', // Aba ativa na visão Operação (diario, cronograma, cadastro)
         filterPendenciasSpe: '', // Filtro local para Pendências
-        filterPendenciasEsteira: '' // Filtro local para Pendências
+        filterPendenciasEsteira: '', // Filtro local para Pendências
+        filterPendenciasResponsavel: '', // Novo filtro por responsável nas pendências
+        filterPendenciasArea: '', // Novo filtro por área nas pendências
+        filterKeyAccount: '', // Novo filtro de KA
+        chartInstances: {
+            erpChart: null,
+            faseChart: null,
+            tipologiaChart: null,
+            statusChart: null,
+            phasesChart: null,
+            slaChart: null
+        },
+        overviewFilter: 'all', // Default filter for Overview dashboard
+        operacionalSubView: 'lancamentos', // Sub-view for Gestão Operacional
+        processualSubView: 'esteiras', // Sub-view for Gestão Processual
+        filterDailyStatuses: ['risk', 'attention', 'ok'], // Default filters for Daily (excluding 'healthy')
+        filterExecutiveERP: '', // Filtro secundário por ERP no Dashboard
+        filterExecutiveFase: '', // Filtro secundário por Fase no Dashboard
+        filterExecutiveTipologia: '' // Filtro secundário por Tipologia no Dashboard
     },
 
     // Mapa de títulos para breadcrumb
     viewTitles: {
-        'carteira': 'Carteira',
+        'carteira': 'Acompanhamento Geral',
         'operacao': 'Operação',
         'overview': 'Visão Geral',
-        'esteiras': 'Esteiras',
-        'sla': 'SLA & Tempo',
+        'gestao-operacional': 'Gestão Operacional',
+        'gestao-processual': 'Gestão Processual',
         'pendencias': 'Pendências',
-        'company': 'Empresa',
         'calendario': 'Calendário',
-        'daily': 'Daily Operacional'
+        'daily-history': 'Histórico de Registros',
+        'faturamento': 'Gestão de Faturamento',
+        'entregaveis': 'Gestão de Entregáveis'
     },
 
     // Definição dos Marcos de Jornada (TtV)
@@ -137,6 +156,7 @@ const App = {
             erp: "SAP",
             codigo_uau: 1001,
             fase_da_spe: "Implantação",
+            tipologia_spe: "Vertical",
             servicos_contratados: "Onboarding Completo",
             sla_dias_uteis_padrao: 5,
             process_id: "PROC-001",
@@ -144,6 +164,7 @@ const App = {
             nome_tarefa: "Análise de Viabilidade Técnica",
             classificacao_tarefa: "Técnica",
             responsabilidade: "Equipe Engenharia",
+            responsavel_direto_tags: "Engenharia",
             esteira: "Viabilidade",
             status_real: "Concluída",
             status_esteira_detalhado: "Aprovado",
@@ -155,7 +176,17 @@ const App = {
             data_kick_off_cliente: "2026-01-22",
             data_inicio_financeira: null,
             data_apresentacao_viabilidade: "2026-02-01",
-            data_inicio_carteira: null
+            data_inicio_carteira: null,
+            sonar_business_id: "B-123",
+            sonar_project_id: "P-456",
+            id_azo_ativo: "AZO-001",
+            id_azo_operacao: "OP-001",
+            nome_do_key_account: "João Silva",
+            gerente_comercial: "Maria Oliveira",
+            origem: "Indicação",
+            prazo_da_politica_de_pagamentos: "30 dias",
+            link_pasta: "https://sharepoint.com/spe1",
+            grupo_cliente: "Diamante"
         },
         {
             id: "2",
@@ -165,13 +196,15 @@ const App = {
             erp: "SAP",
             codigo_uau: 1001,
             fase_da_spe: "Implantação",
-            servicos_contratados: "Onboarding Completo",
+            tipologia_spe: "Vertical",
+            servicos_contratados: "Onboarding Completo, Fiscal",
             sla_dias_uteis_padrao: 10,
             process_id: "PROC-001",
             task_id: "TASK-002",
             nome_tarefa: "Elaboração de Minuta Contratual",
             classificacao_tarefa: "Jurídica",
             responsabilidade: "Equipe Jurídico",
+            responsavel_direto_tags: "Jurídico",
             esteira: "Jurídico",
             status_real: "Em Andamento",
             status_esteira_detalhado: "Aguardando Revisão",
@@ -183,7 +216,17 @@ const App = {
             data_kick_off_cliente: "2026-01-22",
             data_inicio_financeira: null,
             data_apresentacao_viabilidade: "2026-02-01",
-            data_inicio_carteira: null
+            data_inicio_carteira: null,
+            sonar_business_id: "B-123",
+            sonar_project_id: "P-456",
+            id_azo_ativo: "AZO-001",
+            id_azo_operacao: "OP-001",
+            nome_do_key_account: "João Silva",
+            gerente_comercial: "Maria Oliveira",
+            origem: "Indicação",
+            prazo_da_politica_de_pagamentos: "30 dias",
+            link_pasta: "https://sharepoint.com/spe1",
+            grupo_cliente: "Diamante"
         },
         {
             id: "3",
@@ -193,13 +236,15 @@ const App = {
             erp: "SAP",
             codigo_uau: 1002,
             fase_da_spe: "Pré-Operação",
-            servicos_contratados: "Financeiro + Fiscal",
+            tipologia_spe: "Horizontal",
+            servicos_contratados: "Financeiro, Fiscal, Contábil",
             sla_dias_uteis_padrao: 15,
             process_id: "PROC-002",
             task_id: "TASK-003",
             nome_tarefa: "Setup de Contas Bancárias",
             classificacao_tarefa: "Financeira",
             responsabilidade: "Equipe Financeiro",
+            responsavel_direto_tags: "Financeiro",
             esteira: "Financeiro",
             status_real: "Pendente",
             status_esteira_detalhado: "Aguardando Documentação",
@@ -211,7 +256,17 @@ const App = {
             data_kick_off_cliente: "2026-02-03",
             data_inicio_financeira: "2026-02-05",
             data_apresentacao_viabilidade: null,
-            data_inicio_carteira: null
+            data_inicio_carteira: null,
+            sonar_business_id: "B-777",
+            sonar_project_id: "P-888",
+            id_azo_ativo: "AZO-002",
+            id_azo_operacao: "OP-002",
+            nome_do_key_account: "Ricardo Souza",
+            gerente_comercial: "Ana Santos",
+            origem: "Direto",
+            prazo_da_politica_de_pagamentos: "45 dias",
+            link_pasta: "https://sharepoint.com/spe2",
+            grupo_cliente: "Ouro"
         },
         {
             id: "4",
@@ -221,6 +276,7 @@ const App = {
             erp: "TOTVS",
             codigo_uau: 2001,
             fase_da_spe: "Implantação",
+            tipologia_spe: "Loteamento",
             servicos_contratados: "Onboarding Completo",
             sla_dias_uteis_padrao: 20,
             process_id: "PROC-003",
@@ -228,6 +284,7 @@ const App = {
             nome_tarefa: "Projeto Arquitetônico",
             classificacao_tarefa: "Técnica",
             responsabilidade: "Equipe Engenharia",
+            responsavel_direto_tags: "Engenharia",
             esteira: "Engenharia",
             status_real: "Em Andamento",
             status_esteira_detalhado: "Em Desenvolvimento",
@@ -239,7 +296,17 @@ const App = {
             data_kick_off_cliente: "2026-01-20",
             data_inicio_financeira: null,
             data_apresentacao_viabilidade: "2026-01-25",
-            data_inicio_carteira: "2026-02-01"
+            data_inicio_carteira: "2026-02-01",
+            sonar_business_id: "B-999",
+            sonar_project_id: "P-000",
+            id_azo_ativo: "AZO-003",
+            id_azo_operacao: "OP-003",
+            nome_do_key_account: "Ricardo Souza",
+            gerente_comercial: "Ana Santos",
+            origem: "Parceiro",
+            prazo_da_politica_de_pagamentos: "15 dias",
+            link_pasta: "https://sharepoint.com/spe3",
+            grupo_cliente: "Prata"
         }
     ],
 
@@ -324,22 +391,27 @@ const App = {
     getSpeStatus(speData) {
         if (!speData || speData.length === 0) return { status: 'unknown', label: 'Sem Dados', color: 'gray' };
 
-        // Use status_global_processo OR status_jornada_cliente as the primary status driver
-        const globalStatus = ((speData[0]?.status_global_processo || '') + ' ' + (speData[0]?.status_jornada_cliente || '')).toLowerCase();
+        // Primary: Use status_jornada_cliente if it has the standard numbering or names
+        const jornada = (speData[0]?.status_jornada_cliente || '').toLowerCase();
         const pendingCount = speData.filter(t => !t.is_done).length;
 
-        // Map status_global_processo and jornada status to internal status
-        if (globalStatus.includes('5. conclu') || globalStatus.includes('finaliz')) {
+        if (jornada.includes('5. conclu') || jornada.includes('finaliz')) {
             return { status: 'healthy', label: 'Concluído', color: 'green', pendingCount: 0 };
         }
-        if (globalStatus.includes('bloq') || globalStatus.includes('parado') || globalStatus.includes('suspen')) {
+        if (jornada.includes('bloq') || jornada.includes('parado') || jornada.includes('suspen') || jornada.includes('4.')) {
             return { status: 'risk', label: 'Bloqueado', color: 'red', pendingCount };
         }
-        if (globalStatus.includes('3. atras') || globalStatus.includes('risco') || globalStatus.includes('atraso')) {
+        if (jornada.includes('3. atras') || jornada.includes('risco') || jornada.includes('atraso') || jornada.includes('2.')) {
             return { status: 'attention', label: 'Atraso / Risco', color: 'amber', pendingCount };
         }
-        if (globalStatus.includes('andamento') || globalStatus.includes('progress') || globalStatus.includes('ativo') || globalStatus.includes('assistida') || globalStatus.includes('implanta')) {
+        if (jornada.includes('andamento') || jornada.includes('progress') || jornada.includes('ativo') || jornada.includes('1.')) {
             return { status: 'ok', label: 'Em Andamento', color: 'teal', pendingCount };
+        }
+
+        // Secondary: Union with status_global_processo
+        const globalStatus = (speData[0]?.status_global_processo || '').toLowerCase();
+        if (globalStatus.includes('5. conclu') || globalStatus.includes('finaliz')) {
+            return { status: 'healthy', label: 'Concluído', color: 'green', pendingCount: 0 };
         }
 
         // Fallback: derive from task-level data
@@ -411,7 +483,7 @@ const App = {
                     fase: task.fase_da_spe,
                     erp: task.erp,
                     codigo_uau: task.codigo_uau,
-                    servicos: task.servicos_contratados,
+                    servicos_contratados: task.servicos_contratados,
                     tasks: []
                 };
             }
@@ -440,9 +512,24 @@ const App = {
                     razao_social_cliente: t.razao_social_cliente,
                     status_jornada_cliente: t.status_jornada_cliente,
                     fase_da_spe: t.fase_da_spe,
+                    tipologia_spe: t.tipologia_spe,
+                    erp: t.erp,
+                    sonar_business_id: t.sonar_business_id,
+                    sonar_project_id: t.sonar_project_id,
+                    id_azo_ativo: t.id_azo_ativo,
+                    id_azo_operacao: t.id_azo_operacao,
+                    nome_do_key_account: t.nome_do_key_account,
+                    gerente_comercial: t.gerente_comercial,
+                    origem: t.origem,
+                    prazo_da_politica_de_pagamentos: t.prazo_da_politica_de_pagamentos,
+                    link_pasta: t.link_pasta,
+                    codigo_uau: t.codigo_uau,
+                    process_id: t.process_id,
                     start: t.data_kick_off || t.data_inicio_jornada || t.criacao_tarefa,
                     end: t.data_conclusao || t.data_previsao_entrega || t.data_prazo_sla,
                     kpi_ttv_dias_corridos: t.kpi_ttv_dias_corridos,
+                    servicos_contratados: t.servicos_contratados,
+                    sla_dias_uteis_padrao: t.sla_dias_uteis_padrao,
                     tasks: []
                 };
             }
@@ -479,11 +566,11 @@ const App = {
             case 'overview':
                 this.renderOverview(container);
                 break;
-            case 'esteiras':
-                this.renderEsteiras(container);
+            case 'gestao-operacional':
+                this.renderGestaoOperacional(container);
                 break;
-            case 'sla':
-                this.renderSLA(container);
+            case 'gestao-processual':
+                this.renderGestaoProcessual(container);
                 break;
             case 'pendencias':
                 this.renderPendencias(container);
@@ -491,11 +578,11 @@ const App = {
             case 'calendario':
                 this.renderCalendar(container);
                 break;
-            case 'daily':
-                this.renderDaily(container);
+            case 'faturamento':
+                this.renderPlaceholderView(container, 'Gestão de Faturamento', 'fa-file-invoice-dollar', 'Acompanhe o faturamento e fluxo de caixa dos seus projetos.');
                 break;
-            case 'daily-history':
-                this.renderDailyHistory(container);
+            case 'entregaveis':
+                this.renderPlaceholderView(container, 'Gestão de Entregáveis', 'fa-clipboard-check', 'Monitore a qualidade e aprovação dos entregáveis de cada etapa.');
                 break;
             default:
                 this.renderCarteira(container);
@@ -575,6 +662,7 @@ const App = {
     },
 
     renderSpeRow(spe) {
+        // Status class mapping
         const statusClass = {
             'risk': 'status-badge--delayed',
             'attention': 'status-badge--at-risk',
@@ -588,29 +676,30 @@ const App = {
         // Render services as badges
         const servicos = spe.servicos_contratados || [];
         const serviceBadgesHtml = Array.isArray(servicos) && servicos.length > 0
-            ? `<div class="service-badges mt-1">
-                ${servicos.slice(0, 3).map((s, i) =>
-                `<span class="service-badge ${i > 0 ? 'service-badge--alt' : ''}">${this.escapeHtml(s)}</span>`
+            ? `<div class="service-badges mt-2">
+                ${servicos.map(s =>
+                `<span class="service-badge service-badge--primary">${this.escapeHtml(s)}</span>`
             ).join('')}
-                ${servicos.length > 3 ? `<span class="service-badge service-badge--alt">+${servicos.length - 3}</span>` : ''}
                </div>`
             : '';
 
         return `
             <div class="portfolio-spe-row" onclick="App.openSpeDetail('${speKey}')">
-                <div class="spe-info">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full ${spe.healthStatus?.status === 'risk' ? 'bg-rose-500' : spe.healthStatus?.status === 'attention' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
+                <div class="spe-info-block">
+                    <div class="spe-icon-box">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div class="spe-details">
                         <div class="spe-name">${this.escapeHtml(spe.name)}</div>
+                        <div class="spe-meta-row">
+                            ${spe.cnpj ? `<span class="spe-cnpj">${spe.cnpj}</span>` : ''}
+                            ${spe.fase ? `<span class="spe-fase">${spe.fase}</span>` : ''}
+                        </div>
+                        ${serviceBadgesHtml}
                     </div>
-                    <div class="spe-meta">
-                        ${spe.cnpj ? `<span class="font-mono text-xs bg-slate-100 px-1 rounded">${spe.cnpj}</span>` : ''}
-                        ${spe.fase ? `<span class="spe-fase">${spe.fase}</span>` : ''}
-                    </div>
-                    ${serviceBadgesHtml}
                 </div>
-                
-                <!-- V2 TtV Journey Bar -->
+
+                <!-- TtV Journey Bar (Restored) -->
                 <div class="ttv-journey">
                     <div class="ttv-journey__line"></div>
                     ${(spe.milestones || []).map(m => {
@@ -626,12 +715,12 @@ const App = {
         }).join('')}
                 </div>
                 
-                <div class="spe-status">
+                <div class="spe-col-status flex flex-col gap-1">
                     <span class="status-badge ${statusClass}">${spe.healthStatus?.label || 'Saudável'}</span>
-                    ${(spe.healthStatus?.pendingCount || 0) > 0 ? `<span class="pending-count">${spe.healthStatus.pendingCount} pendente${spe.healthStatus.pendingCount > 1 ? 's' : ''}</span>` : ''}
+                    ${(spe.healthStatus?.pendingCount || 0) > 0 ? `<span class="pending-count text-xs text-gray-400">${spe.healthStatus.pendingCount} pendente${spe.healthStatus.pendingCount > 1 ? 's' : ''}</span>` : ''}
                 </div>
                 
-                <div class="spe-activity">
+                <div class="spe-col-update">
                     ${spe.lastActivity !== null
                 ? `<span class="activity-indicator ${spe.lastActivity > 7 ? 'activity-indicator--stale' : 'activity-indicator--recent'}">
                                 <i class="fa-solid fa-clock"></i> ${spe.lastActivity === 0 ? 'Hoje' : spe.lastActivity + 'd atrás'}
@@ -640,9 +729,9 @@ const App = {
             }
                 </div>
                 
-                <div class="spe-action">
-                    <button class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
-                        Abrir <i class="fa-solid fa-arrow-right"></i>
+                <div class="spe-col-action">
+                    <button class="u-btn u-btn-outline">
+                        Abrir <i class="fa-solid fa-arrow-right ml-1"></i>
                     </button>
                 </div>
             </div>
@@ -1086,6 +1175,26 @@ const App = {
                             <span>${speInfo.process_id || '-'}</span>
                         </div>
                     </div>
+
+                    <div class="cadastro-section">
+                        <h4><i class="fa-solid fa-microchip mr-2 text-teal-600"></i>Sonar & AZO</h4>
+                        <div class="cadastro-field">
+                            <label>Sonar Business ID</label>
+                            <span>${speInfo.sonar_business_id || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Sonar Project ID</label>
+                            <span>${speInfo.sonar_project_id || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>ID AZO Ativo</label>
+                            <span>${speInfo.id_azo_ativo || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>ID AZO Operação</label>
+                            <span>${speInfo.id_azo_operacao || '-'}</span>
+                        </div>
+                    </div>
                     
                     <div class="cadastro-section">
                         <h4><i class="fa-solid fa-tags mr-2 text-teal-600"></i>Contrato & Jornada</h4>
@@ -1098,12 +1207,50 @@ const App = {
                             <span>${speInfo.fase_da_spe || '-'}</span>
                         </div>
                         <div class="cadastro-field">
+                            <label>Tipologia</label>
+                            <span>${speInfo.tipologia_spe || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
                             <label>SLA Padrão</label>
                             <span>${speInfo.sla_dias_uteis_padrao || 5} dias úteis</span>
                         </div>
                         <div class="cadastro-field">
+                            <label>Serviços</label>
+                            <div class="service-badges">
+                                ${(speInfo.servicos_contratados || []).map(s => `<span class="service-badge service-badge--primary">${this.escapeHtml(s)}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="cadastro-field">
                             <label>TTV (Dias Corridos)</label>
                             <span class="badge badge-info">${speInfo.kpi_ttv_dias_corridos || 0} dias</span>
+                        </div>
+                    </div>
+
+                    <div class="cadastro-section">
+                        <h4><i class="fa-solid fa-user-tie mr-2 text-teal-600"></i>Responsáveis & Origem</h4>
+                        <div class="cadastro-field">
+                            <label>Key Account</label>
+                            <span>${speInfo.nome_do_key_account || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Gerente Comercial</label>
+                            <span>${speInfo.gerente_comercial || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Origem</label>
+                            <span>${speInfo.origem || '-'}</span>
+                        </div>
+                    </div>
+
+                    <div class="cadastro-section">
+                        <h4><i class="fa-solid fa-file-invoice-dollar mr-2 text-teal-600"></i>Financeiro & Links</h4>
+                        <div class="cadastro-field">
+                            <label>Política de Pagamento</label>
+                            <span>${speInfo.prazo_da_politica_de_pagamentos || '-'}</span>
+                        </div>
+                        <div class="cadastro-field">
+                            <label>Pasta do Projeto</label>
+                            ${speInfo.link_pasta ? `<a href="${speInfo.link_pasta}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1"><i class="fa-solid fa-external-link text-[10px]"></i> Acessar Pasta</a>` : '<span>-</span>'}
                         </div>
                     </div>
 
@@ -1141,176 +1288,418 @@ const App = {
         `;
     },
 
-    // ============================================================
-    // 3.3. STRATEGIC VIEWS
-    // ============================================================
+    setExecutiveSecondaryFilter(key, value) {
+        this.state[key] = value;
+        this.render();
+    },
+
+    clearAllExecutiveFilters() {
+        this.state.overviewFilter = 'all';
+        this.state.filterExecutiveERP = '';
+        this.state.filterExecutiveFase = '';
+        this.state.filterExecutiveTipologia = '';
+        this.render();
+    },
 
     // --- VIEW: VISÃO GERAL (Overview) ---
     renderOverview(container) {
         const data = this.getFilteredData();
         const speMap = this.groupBySPE(data);
         const spes = Object.values(speMap);
+        const currentFilter = this.state.overviewFilter || 'all';
 
-        // Core KPIs
-        const totalOps = spes.length;
-        const inOnboarding = spes.filter(s => {
+        // 1. Calculate Primary Counts & Sub-statuses
+        const totalOpsCount = spes.length;
+
+        // Filter: Onboarding (everyone not yet concluded)
+        const onboardingSpes = spes.filter(s => {
             const status = (s.status_jornada_cliente || '').toLowerCase();
             return status && !status.includes('5. conclu');
-        }).length;
+        });
 
-        // Critical Pending: SPEs with any blocked task OR relevant status
-        const withPendencies = spes.filter(s => {
+        // Filter: Critical Pendencies (already has custom logic)
+        // Filter: Critical Pendencies (Active Only)
+        // Rule: Only show critical issues for non-concluded operations
+        const criticalSpes = spes.filter(s => {
+            const isConcluded = (s.status_jornada_cliente || '').toLowerCase().includes('conclu');
+            if (isConcluded) return false;
+
             const hasBlockedTask = s.tasks.some(t => (t.status_tarefa || '').toLowerCase().includes('bloq'));
             const isDelayed = (s.status_jornada_cliente || '').includes('3. Atrasado');
             return hasBlockedTask || isDelayed;
         });
 
-        // Average TTV (using kpi_ttv_dias_corridos from the process level)
+        // Sub-status breakout for Onboarding based on RAW status_jornada_cliente
+        const statusCounts = onboardingSpes.reduce((acc, s) => {
+            const st = s.status_jornada_cliente || 'N/A';
+            acc[st] = (acc[st] || 0) + 1;
+            return acc;
+        }, {});
+        const uniqueOnboardingStatuses = Object.keys(statusCounts).sort();
+
+        // 2. Select data for the detail list based on filter
+        let filteredList = [];
+        let listTitle = "Listagem Geral";
+
+        switch (currentFilter) {
+            case 'all':
+                filteredList = spes;
+                listTitle = "Todas as Operações";
+                break;
+            case 'onboarding':
+                filteredList = onboardingSpes;
+                listTitle = "Operações em Onboarding";
+                break;
+            case 'critical':
+                filteredList = criticalSpes;
+                listTitle = "Operações com Pendências Críticas";
+                break;
+            default:
+                // Direct match with status_jornada_cliente
+                filteredList = onboardingSpes.filter(s => (s.status_jornada_cliente || 'N/A') === currentFilter);
+                listTitle = `Onboarding: ${currentFilter}`;
+        }
+
+        // Apply Secondary Filters (Charts)
+        if (this.state.filterExecutiveERP) {
+            filteredList = filteredList.filter(s => (s.erp || 'N/A') === this.state.filterExecutiveERP);
+        }
+        if (this.state.filterExecutiveFase) {
+            filteredList = filteredList.filter(s => (s.fase_da_spe || 'N/A') === this.state.filterExecutiveFase);
+        }
+        if (this.state.filterExecutiveTipologia) {
+            filteredList = filteredList.filter(s => (s.tipologia_spe || 'N/A') === this.state.filterExecutiveTipologia);
+        }
+
+        // External Causes (Client Pending)
+        // Groups: Cliente - correção, Cliente - documentação, Cliente - validação
+        // Uses flexible matching to handle potential variations in spacing or delimiters
+        const clientPendingTasks = data.filter(t => {
+            const status = (t.status_real || '').toLowerCase();
+            const statusDet = (t.status_esteira_detalhado || '').toLowerCase();
+            const resp = (t.responsabilidade || '').toLowerCase();
+            const tags = (t.responsavel_direto_tags || '').toLowerCase();
+
+            const combined = `${status} ${statusDet} ${resp} ${tags}`;
+
+            // Logica: Tem que ter "cliente" E um dos termos chave
+            if (!combined.includes('cliente')) return false;
+
+            // Business Rule: Exclude Concluded Tasks
+            if (status.includes('conclu') || status.includes('entregue') || status.includes('finaliz')) return false;
+
+            return combined.includes('correção') ||
+                combined.includes('documentação') ||
+                combined.includes('validação') ||
+                combined.includes('validacao') || // Fallback no accent
+                combined.includes('correcao') ||  // Fallback no accent
+                combined.includes('documentacao'); // Fallback no accent
+        });
+
+        // Average TTV
         const ttvArray = spes.map(s => s.kpi_ttv_dias_corridos || 0).filter(v => v > 0);
         const avgTtv = ttvArray.length > 0 ? Math.round(ttvArray.reduce((as, b) => as + b, 0) / ttvArray.length) : 0;
 
-        // Top 10 Delays by Client
-        // Aggregate delays (or risk status) per client
+        // Top 10 Delays logic (fixed status_real reference)
         const clientDelays = {};
         data.forEach(t => {
             const client = t.razao_social_cliente || 'N/A';
-            const status = (t.status_real || '').toLowerCase(); // FIX: Use status_real
-            const isDelayed = status.includes('bloq') || status.includes('atras') || status.includes('risco');
-
-            if (isDelayed) {
-                if (!clientDelays[client]) clientDelays[client] = { name: client, count: 0, spes: new Set() };
+            const status = (t.status_real || '').toLowerCase();
+            if (status.includes('bloq') || status.includes('atras') || status.includes('risco')) {
+                if (!clientDelays[client]) clientDelays[client] = { name: client, count: 0 };
                 clientDelays[client].count++;
-                clientDelays[client].spes.add(t.razao_social_da_spe);
             }
         });
-        const top10Clients = Object.values(clientDelays)
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
+        const top10Clients = Object.values(clientDelays).sort((a, b) => b.count - a.count).slice(0, 10);
 
-        // External Causes (Client Pending)
-        const clientPendingTasks = data.filter(t =>
-            (t.status_tarefa || '').toLowerCase().includes('bloq') &&
-            (t.responsabilidade || '').toLowerCase().includes('cliente')
-        );
+        // UI Helpers
+        const cardClass = "bg-white p-6 rounded-2xl shadow-sm border transition-all cursor-pointer hover:shadow-md hover:border-indigo-200 flex flex-col group";
+        const activeClass = "border-indigo-500 ring-2 ring-indigo-50 shadow-md";
 
         container.innerHTML = `
             <div class="fade-in animate-fade-in">
                 <!-- Header -->
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-slate-800">Painel Executivo</h2>
-                    <p class="text-sm text-slate-500">Visão consolidada da operação e saúde dos projetos.</p>
-                </div>
-
-                <!-- KPI Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Operações Totais</span>
-                        <div class="flex items-center justify-between">
-                            <span class="text-3xl font-extrabold text-slate-800">${totalOps}</span>
-                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">
-                                <i class="fa-solid fa-layer-group"></i>
-                            </div>
+                <div class="mb-8 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Painel Executivo</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <p class="text-sm text-slate-500">Visão consolidada e filtros dinâmicos de operação.</p>
+                            ${this.state.filterExecutiveERP ? `<span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-indigo-100 flex items-center gap-1">ERP: ${this.state.filterExecutiveERP} <i class="fa-solid fa-times cursor-pointer" onclick="App.setExecutiveSecondaryFilter('filterExecutiveERP', '')"></i></span>` : ''}
+                            ${this.state.filterExecutiveFase ? `<span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-blue-100 flex items-center gap-1">Fase: ${this.state.filterExecutiveFase} <i class="fa-solid fa-times cursor-pointer" onclick="App.setExecutiveSecondaryFilter('filterExecutiveFase', '')"></i></span>` : ''}
+                            ${this.state.filterExecutiveTipologia ? `<span class="bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-teal-100 flex items-center gap-1">Tipologia: ${this.state.filterExecutiveTipologia} <i class="fa-solid fa-times cursor-pointer" onclick="App.setExecutiveSecondaryFilter('filterExecutiveTipologia', '')"></i></span>` : ''}
                         </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Em Onboarding</span>
-                        <div class="flex items-center justify-between">
-                            <span class="text-3xl font-extrabold text-blue-600">${inOnboarding}</span>
-                            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
-                                <i class="fa-solid fa-rocket"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pendências Críticas</span>
-                        <div class="flex items-center justify-between">
-                            <span class="text-3xl font-extrabold text-rose-600">${withPendencies.length}</span>
-                            <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-rose-400 mt-2 font-medium">Empresas com bloqueio ativo</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">TTV Médio</span>
-                        <div class="flex items-center justify-between">
-                            <span class="text-3xl font-extrabold text-emerald-600">${avgTtv} <small class="text-xs font-bold text-emerald-400">DIAS</small></span>
-                            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
-                                <i class="fa-solid fa-stopwatch"></i>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-emerald-400 mt-2 font-medium">Média de ciclo completo</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <!-- Top Delays -->
-                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="font-bold text-slate-800">Top Atrasos por Cliente</h3>
-                            <i class="fa-solid fa-ranking-star text-amber-400"></i>
+                <!-- Main KPI Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
+                    <!-- Total Ops -->
+                    <div onclick="App.setOverviewFilter('all')" 
+                         class="md:col-span-2 ${cardClass} ${currentFilter === 'all' ? activeClass : 'border-slate-100'} items-center justify-center text-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Operações Totais</span>
+                        <span class="text-4xl font-extrabold text-slate-800 mb-2">${totalOpsCount}</span>
+                        <div class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                            <i class="fa-solid fa-layer-group"></i>
                         </div>
-                        <div class="space-y-4">
-                            ${top10Clients.length > 0 ? top10Clients.map((c, i) => `
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <span class="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400">${i + 1}</span>
-                                        <span class="text-sm text-slate-600 font-medium truncate">${this.escapeHtml(c.name)}</span>
+                    </div>
+
+                    <!-- Onboarding Multi-Card -->
+                    <div class="md:col-span-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div onclick="App.setOverviewFilter('onboarding')" 
+                             class="md:col-span-1 ${cardClass} relative overflow-hidden ${currentFilter === 'onboarding' ? activeClass : 'border-slate-100'} justify-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Onboarding</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-4xl font-extrabold text-blue-600">${onboardingSpes.length}</span>
+                                <span class="text-[10px] text-slate-400 leading-tight">Projetos<br>Ativos</span>
+                            </div>
+                            <i class="fa-solid fa-rocket text-blue-50 text-4xl absolute -right-4 -bottom-4 transform rotate-12"></i>
+                            <p class="text-[9px] text-blue-400 mt-2 font-bold uppercase tracking-wider">Ver Todos</p>
+                        </div>
+                        
+                        <div class="md:col-span-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100 flex flex-nowrap overflow-x-auto gap-3 items-center custom-scrollbar">
+                            ${uniqueOnboardingStatuses.map(status => {
+            const count = statusCounts[status];
+            const isActive = currentFilter === status;
+            return `
+                                    <div onclick="App.setOverviewFilter('${this.escapeAttr(status)}')" 
+                                         class="flex flex-col items-center justify-center cursor-pointer hover:bg-white p-3 min-w-[100px] rounded-xl transition-all border border-transparent hover:border-slate-100 ${isActive ? 'bg-white shadow-sm ring-1 ring-indigo-500' : ''}">
+                                        <span class="text-2xl font-bold text-indigo-600 mb-1">${count}</span>
+                                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center leading-3 h-6 flex items-center justify-center overflow-hidden line-clamp-2" title="${this.escapeAttr(status)}">${this.escapeHtml(status)}</span>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">${c.count}</span>
+                                `;
+        }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Critical Pendencies -->
+                    <div onclick="App.setOverviewFilter('critical')" 
+                         class="md:col-span-2 ${cardClass} ${currentFilter === 'critical' ? activeClass : 'border-slate-100'} items-center justify-center text-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pendências Críticas</span>
+                        <span class="text-4xl font-extrabold text-rose-600 mb-2">${criticalSpes.length}</span>
+                        <div class="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center text-rose-500">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Charts Section -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-microchip text-indigo-500"></i> Empresas por ERP
+                        </h3>
+                        <div class="h-64">
+                            <canvas id="erpChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-blue-500"></i> Empresas por Fase
+                        </h3>
+                        <div class="h-64">
+                            <canvas id="faseChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-teal-500"></i> Empresas por Tipologia
+                        </h3>
+                        <div class="h-64">
+                            <canvas id="tipologiaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expanded Client Pendencies Section (Full Width) -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+                                <i class="fa-solid fa-user-clock text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">Pendências com Clientes</h3>
+                                <p class="text-xs text-slate-500">Apenas pendências abertas (não concluídas). Top 15 por categoria.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        ${['Correção', 'Documentação', 'Validação'].map(type => {
+            const typeLower = type.toLowerCase();
+
+            // Filter logic: Match type AND Open Status
+            const tasks = clientPendingTasks.filter(t => {
+                const status = (t.status_real || '').toLowerCase();
+                const statusDet = (t.status_esteira_detalhado || '').toLowerCase();
+                const resp = (t.responsabilidade || '').toLowerCase();
+                const tags = (t.responsavel_direto_tags || '').toLowerCase();
+
+                const combined = `${status} ${statusDet} ${resp} ${tags}`;
+
+                // Explicitly Exclude Completed Tasks (already filtered in definition but safe to double check)
+                if (status.includes('conclu') || status.includes('entregue') || status.includes('finaliz')) return false;
+
+                if (typeLower === 'validação') return combined.includes('validação') || combined.includes('validacao');
+                if (typeLower === 'correção') return combined.includes('correção') || combined.includes('correcao');
+                if (typeLower === 'documentação') return combined.includes('documentação') || combined.includes('documentacao');
+
+                return combined.includes(typeLower);
+            });
+
+            const count = tasks.length;
+            // Sort by deadline asc (most overdue first)
+            const sortedTasks = tasks.sort((a, b) => (new Date(a.data_prazo_sla || '2099-12-31') - new Date(b.data_prazo_sla || '2099-12-31')));
+            const top15 = sortedTasks.slice(0, 15);
+
+            let icon = 'fa-wrench';
+            let color = 'amber';
+            let bgClass = 'bg-amber-50';
+            let textClass = 'text-amber-600';
+            let borderClass = 'border-amber-100';
+
+            if (type === 'Documentação') {
+                icon = 'fa-file-contract';
+                color = 'blue';
+                bgClass = 'bg-blue-50';
+                textClass = 'text-blue-600';
+                borderClass = 'border-blue-100';
+            }
+            if (type === 'Validação') {
+                icon = 'fa-check-double';
+                color = 'indigo';
+                bgClass = 'bg-indigo-50';
+                textClass = 'text-indigo-600';
+                borderClass = 'border-indigo-100';
+            }
+
+            return `
+                                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
+                                    <!-- Header -->
+                                    <div class="${bgClass} p-4 border-b ${borderClass} flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-white/60 flex items-center justify-center ${textClass}">
+                                                <i class="fa-solid ${icon}"></i>
+                                            </div>
+                                            <span class="font-bold text-slate-700 uppercase tracking-wide text-sm">${type}</span>
+                                        </div>
+                                        <span class="bg-white ${textClass} px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">${count}</span>
+                                    </div>
+
+                                    <!-- Content List -->
+                                    <div class="flex-1 overflow-y-auto max-h-[350px] custom-scrollbar">
+                                        ${top15.length > 0 ? `
+                                            <div class="divide-y divide-slate-50">
+                                            ${top15.map(t => `
+                                                <div class="p-3 hover:bg-slate-50 transition-colors group">
+                                                    <div class="flex justify-between items-start mb-0.5">
+                                                        <div class="min-w-0 flex-1 mr-2">
+                                                            <!-- Line 1: Task Name (Primary) -->
+                                                            <div class="text-xs font-bold text-slate-700 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors" title="${this.escapeAttr(t.nome_tarefa)}">
+                                                                ${t.nome_tarefa || 'Tarefa sem nome'}
+                                                            </div>
+                                                        </div>
+                                                        ${t.diasAtraso > 0
+                    ? `<span class="text-[9px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded whitespace-nowrap border border-rose-100 flex-shrink-0 mt-0.5">${t.diasAtraso}d</span>`
+                    : ``
+                }
+                                                    </div>
+                                                    <!-- Line 2: Client Name + Group (Secondary) -->
+                                                    <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                        <span class="text-[10px] text-slate-500 font-medium truncate max-w-full" title="${this.escapeAttr(t.razao_social_da_spe)}">${this.escapeHtml(t.razao_social_da_spe)}</span>
+                                                        ${t.grupo_cliente ? `<span class="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 text-slate-400 border border-slate-200 uppercase tracking-tight">${this.escapeHtml(t.grupo_cliente)}</span>` : ''}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                            </div>
+                                        ` : `
+                                            <div class="h-40 flex flex-col items-center justify-center text-slate-300">
+                                                <i class="fa-regular fa-circle-check text-3xl mb-2 opacity-30"></i>
+                                                <span class="text-xs italic">Tudo em dia!</span>
+                                            </div>
+                                        `}
+                                    </div>
+
+                                    <!-- Footer Action -->
+                                    <div class="p-3 bg-slate-50 border-t border-slate-100">
+                                        <button onclick="App.setOverviewFilter('client_${typeLower}')" 
+                                                class="w-full py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-300 hover:shadow-sm transition-all flex items-center justify-center gap-2 group-hover:border-indigo-200">
+                                            <span>Ver Todos (${count})</span>
+                                            <i class="fa-solid fa-arrow-right text-[10px] opacity-70 group-hover:translate-x-0.5 transition-transform"></i>
+                                        </button>
                                     </div>
                                 </div>
-                            `).join('') : '<p class="text-sm text-slate-400 italic">Nenhum atraso mapeado.</p>'}
-                        </div>
+                            `;
+        }).join('')}
                     </div>
+                </div>
 
-                    <!-- Detalhes de Pendências -->
-                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="p-6 border-bottom border-slate-50 flex items-center justify-between">
-                            <h3 class="font-bold text-slate-800">Operações com Pendências</h3>
-                            <button onclick="App.setView('pendencias')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700">Ver todas <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                <div class="grid grid-cols-1 gap-8 mb-8">
+
+                    <!-- Filtered Detail List (Dynamic Section) -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden ring-4 ring-indigo-50/20">
+                        <div class="p-6 bg-slate-50/30 border-bottom border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-6 bg-indigo-500 rounded-full"></div>
+                                <h3 class="font-bold text-slate-800">${listTitle}</h3>
+                                <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${filteredList.length}</span>
+                            </div>
+                            ${(currentFilter !== 'all' || this.state.filterExecutiveERP || this.state.filterExecutiveFase || this.state.filterExecutiveTipologia) ? `
+                                <button onclick="App.clearAllExecutiveFilters()" class="text-xs font-bold text-rose-500 hover:text-rose-700 flex items-center gap-1 transition-colors">
+                                    <i class="fa-solid fa-times-circle"></i> Limpar Filtros
+                                </button>
+                            ` : ''}
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm border-collapse">
-                                <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                                <thead class="bg-slate-50/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
                                     <tr>
-                                        <th class="px-6 py-3">SPE / Empresa</th>
-                                        <th class="px-6 py-3">Motivo Crítico</th>
-                                        <th class="px-6 py-3 text-right">Ação</th>
+                                        <th class="px-6 py-3">Empresa / Cliente</th>
+                                        <th class="px-6 py-3">Status Jornada</th>
+                                        <th class="px-6 py-3">Saúde</th>
+                                        <th class="px-6 py-3 text-right">Detalhes</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-50">
-                                    ${withPendencies.length > 0 ? withPendencies.slice(0, 10).map(s => {
-            const blockedTask = s.tasks.find(t => (t.status_tarefa || '').toLowerCase().includes('bloq'));
+                                    ${filteredList.length > 0 ? filteredList.slice(0, 15).map(s => {
+            const h = s.healthStatus;
+            const statusClass = h.status === 'risk' ? 'status-badge--delayed' :
+                h.status === 'attention' ? 'status-badge--at-risk' :
+                    h.status === 'healthy' ? 'status-badge--completed' : 'status-badge--on-track';
+
             return `
-                                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <tr class="hover:bg-slate-50/70 transition-colors">
                                                 <td class="px-6 py-4">
-                                                    <div class="font-bold text-slate-700 truncate max-w-[200px]">${this.escapeHtml(s.razao_social_da_spe)}</div>
+                                                    <div class="font-bold text-slate-700 truncate max-w-[220px]">${this.escapeHtml(s.name)}</div>
                                                     <div class="text-[10px] text-slate-400 uppercase font-medium">${this.escapeHtml(s.razao_social_cliente)}</div>
                                                 </td>
                                                 <td class="px-6 py-4">
-                                                    ${blockedTask ? `
-                                                        <span class="inline-flex items-center gap-1 text-rose-600 font-medium overflow-hidden truncate max-w-[200px]">
-                                                            <i class="fa-solid fa-ban text-[10px]"></i> ${this.escapeHtml(blockedTask.tarefa)}
-                                                        </span>
-                                                    ` : '<span class="text-slate-400 italic">Gargalo operacional</span>'}
+                                                    <span class="text-xs font-medium text-slate-600">${this.escapeHtml(s.status_jornada_cliente || 'Em andamento')}</span>
+                                                    <div class="text-[9px] text-slate-400 mt-0.5">${this.escapeHtml(s.fase_da_spe || '-')}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="status-badge ${statusClass}">${h.label}</span>
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
-                                                    <button onclick="App.filterPendenciasAndGo('${this.escapeAttr(s.razao_social_da_spe)}')" 
-                                                            class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors flex items-center justify-center ml-auto">
-                                                        <i class="fa-solid fa-eye text-xs"></i>
+                                                    <button onclick="App.setView('company', { spe: '${this.escapeAttr(s.name)}' })" 
+                                                            class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center ml-auto">
+                                                        <i class="fa-solid fa-eye"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         `;
         }).join('') : `
                                         <tr>
-                                            <td colspan="3" class="px-6 py-12 text-center text-slate-400 italic">Nenhuma pendência crítica encontrada.</td>
+                                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">Nenhuma empresa encontrada com este filtro.</td>
                                         </tr>
                                     `}
                                 </tbody>
                             </table>
+                            ${filteredList.length > 15 ? `
+                                <div class="p-3 text-center bg-slate-50/50 border-t border-slate-100">
+                                    <p class="text-[10px] font-bold text-slate-400 italic">Exibindo as primeiras 15 de ${filteredList.length} operações.</p>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -1332,6 +1721,87 @@ const App = {
                 </div>
             </div>
         `;
+
+        // Initialize charts after HTML is appended
+        this.renderExecutiveCharts(spes);
+    },
+
+
+    renderExecutiveCharts(spes) {
+        // ERP Distribution
+        const erpData = spes.reduce((acc, s) => {
+            const erp = s.erp || 'N/A';
+            acc[erp] = (acc[erp] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Fase Distribution
+        const faseData = spes.reduce((acc, s) => {
+            const fase = s.fase_da_spe || 'N/A';
+            acc[fase] = (acc[fase] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Tipologia Distribution
+        const tipologiaData = spes.reduce((acc, s) => {
+            const tipologia = s.tipologia_spe || 'N/A';
+            acc[tipologia] = (acc[tipologia] || 0) + 1;
+            return acc;
+        }, {});
+
+        this.renderPieChart('erpChart', Object.keys(erpData), Object.values(erpData), ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe'], (val) => this.setExecutiveSecondaryFilter('filterExecutiveERP', val));
+        this.renderPieChart('faseChart', Object.keys(faseData), Object.values(faseData), ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'], (val) => this.setExecutiveSecondaryFilter('filterExecutiveFase', val));
+        this.renderPieChart('tipologiaChart', Object.keys(tipologiaData), Object.values(tipologiaData), ['#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4'], (val) => this.setExecutiveSecondaryFilter('filterExecutiveTipologia', val));
+    },
+
+    renderPieChart(canvasId, labels, values, colors, onSelect = null) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        // Destroy existing instance if any
+        if (this.state.chartInstances[canvasId]) {
+            this.state.chartInstances[canvasId].destroy();
+        }
+
+        this.state.chartInstances[canvasId] = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                onClick: (evt, elements) => {
+                    if (elements.length > 0 && onSelect) {
+                        const index = elements[0].index;
+                        const label = labels[index];
+                        onSelect(label);
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: { size: 10, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 10,
+                        titleFont: { size: 12 },
+                        bodyFont: { size: 12 }
+                    }
+                }
+            }
+        });
     },
 
 
@@ -1380,6 +1850,111 @@ const App = {
                 }
             }
         });
+    },
+
+    // --- MODULE: GESTÃO PROCESSUAL (Esteiras + SLA) ---
+    renderGestaoProcessual(container) {
+        container.innerHTML = `
+            <div class="fade-in px-2">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-800">Gestão Processual</h2>
+                    <p class="text-sm text-slate-500">Métricas de performance por esteiras e análise de SLA.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Column 1: Performance Table -->
+                    <div id="processual-table-container"></div>
+                    
+                    <!-- Column 2: SLA Chart -->
+                    <div id="processual-chart-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center justify-between">
+                            <span>SLA Previsto vs Lead Time Real</span>
+                            <i class="fa-solid fa-scale-balanced text-indigo-500"></i>
+                        </h3>
+                        <div class="h-80">
+                            <canvas id="slaComparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Stats Row -->
+                <div id="processual-stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </div>
+        `;
+
+        // Render components into containers
+        const tableContainer = document.getElementById('processual-table-container');
+        const statsContainer = document.getElementById('processual-stats-container');
+
+        // Populate the components
+        this.renderEsteiras(tableContainer);
+        this.renderSLAChartsAndStats(statsContainer);
+    },
+
+    // Refactored helper to render SLA charts and stats correctly
+    renderSLAChartsAndStats(statsContainer) {
+        const data = this.getFilteredData();
+        const esteirasMap = data.reduce((acc, d) => {
+            const est = d.esteira || 'Geral';
+            if (!acc[est]) acc[est] = { slaDays: [], leadTimes: [] };
+            if (d.sla_dias_uteis_padrao) acc[est].slaDays.push(d.sla_dias_uteis_padrao);
+            if (d.lead_time) acc[est].leadTimes.push(d.lead_time);
+            return acc;
+        }, {});
+
+        const labels = Object.keys(esteirasMap);
+        const slaData = labels.map(est => {
+            const days = esteirasMap[est].slaDays;
+            return days.length > 0 ? Math.round(days.reduce((a, b) => a + b, 0) / days.length) : 0;
+        });
+        const leadTimeData = labels.map(est => {
+            const times = esteirasMap[est].leadTimes;
+            return times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+        });
+
+        const avgSla = Math.round(slaData.reduce((a, b) => a + b, 0) / (slaData.length || 1));
+        const avgLead = Math.round(leadTimeData.reduce((a, b) => a + b, 0) / (leadTimeData.length || 1));
+        const isHealthy = avgLead <= avgSla;
+
+        if (statsContainer) {
+            statsContainer.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
+                    <div class="text-3xl font-bold text-blue-600 mb-1">${avgSla}</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SLA Médio (dias)</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
+                    <div class="text-3xl font-bold text-indigo-600 mb-1">${avgLead}</div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lead Time Médio (dias)</div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
+                    <div class="text-3xl font-bold ${isHealthy ? 'text-emerald-500' : 'text-rose-500'} mb-1">
+                        ${isHealthy ? '✓ Saudável' : '⚠ Crítico'}
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Geral SLA</div>
+                </div>
+            `;
+        }
+
+        // Initialize Chart
+        const ctx = document.getElementById('slaComparisonChart');
+        if (ctx) {
+            this.state.chartInstances.slaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'SLA Previsto', data: slaData, backgroundColor: '#6366f1', borderRadius: 6 },
+                        { label: 'Lead Time Real', data: leadTimeData, backgroundColor: '#94a3b8', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
     },
 
     // --- VIEW: ESTEIRAS ---
@@ -1543,6 +2118,16 @@ const App = {
         // Options for the filters
         const availableSpes = [...new Set(pending.map(p => p.razao_social_da_spe))].sort();
         const availableEsteiras = [...new Set(pending.map(p => p.esteira))].sort();
+        const availableResponsibles = [...new Set(pending.map(p => p.responsabilidade).filter(Boolean))].sort();
+        const availableAreas = [...new Set(pending.map(p => p.responsavel_direto_tags).filter(Boolean))].sort();
+
+        if (this.state.filterPendenciasArea) {
+            filteredPending = filteredPending.filter(p => p.responsavel_direto_tags === this.state.filterPendenciasArea);
+        }
+
+        if (this.state.filterPendenciasResponsavel) {
+            filteredPending = filteredPending.filter(p => p.responsabilidade === this.state.filterPendenciasResponsavel);
+        }
 
         // Calculate days delayed
         const pendenciasWithDelay = filteredPending.map(d => {
@@ -1587,6 +2172,28 @@ const App = {
                         </select>
                     </div>
 
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user-circle text-slate-400"></i>
+                            <span class="text-sm font-semibold text-slate-600">Responsável:</span>
+                        </div>
+                        <select onchange="App.setPendenciasFilter('filterPendenciasResponsavel', this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]">
+                            <option value="">Todos os Responsáveis</option>
+                            ${availableResponsibles.map(r => `<option value="${this.escapeAttr(r)}" ${this.state.filterPendenciasResponsavel === r ? 'selected' : ''}>${this.escapeHtml(r)}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-slate-400"></i>
+                            <span class="text-sm font-semibold text-slate-600">Área:</span>
+                        </div>
+                        <select onchange="App.setPendenciasFilter('filterPendenciasArea', this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]">
+                            <option value="">Todas as Áreas</option>
+                            ${availableAreas.map(a => `<option value="${this.escapeAttr(a)}" ${this.state.filterPendenciasArea === a ? 'selected' : ''}>${this.escapeHtml(a)}</option>`).join('')}
+                        </select>
+                    </div>
+
                     <div class="ml-auto text-xs text-slate-400">
                         Exibindo <strong>${filteredPending.length}</strong> de ${pending.length} pendências globais
                     </div>
@@ -1612,6 +2219,7 @@ const App = {
                                     <th>Tarefa</th>
                                     <th>Dias em Atraso</th>
                                     <th>Responsável</th>
+                                    <th>Área</th>
                                     <th>Comentários</th>
                                 </tr>
                             </thead>
@@ -1623,6 +2231,9 @@ const App = {
                                                class="text-teal-600 hover:text-teal-800 font-medium hover:underline">
                                                 ${this.escapeHtml(p.razao_social_da_spe)}
                                             </a>
+                                            <div class="service-badges mt-1">
+                                                ${(p.servicos_contratados || []).map(s => `<span class="service-badge">${this.escapeHtml(s)}</span>`).join('')}
+                                            </div>
                                         </td>
                                         <td class="max-w-xs truncate" title="${this.escapeAttr(p.nome_tarefa)}">${this.escapeHtml(p.nome_tarefa)}</td>
                                         <td class="text-center">
@@ -1632,6 +2243,11 @@ const App = {
             }
                                         </td>
                                         <td class="text-slate-600">${this.escapeHtml(p.responsabilidade)}</td>
+                                        <td>
+                                            <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase">
+                                                ${this.escapeHtml(p.responsavel_direto_tags || '-')}
+                                            </span>
+                                        </td>
                                         <td class="max-w-xs">
                                             ${p.comentario_resolucao_pendencia
                 ? `<span class="text-sm text-slate-600" title="${this.escapeAttr(p.comentario_resolucao_pendencia)}">${this.escapeHtml(p.comentario_resolucao_pendencia.substring(0, 50))}${p.comentario_resolucao_pendencia.length > 50 ? '...' : ''}</span>`
@@ -1646,6 +2262,44 @@ const App = {
                 </div>
             </div>
         `;
+    },
+
+    // --- MODULE: GESTÃO OPERACIONAL (Daily + Central) ---
+    renderGestaoOperacional(container) {
+        const subView = this.state.operacionalSubView || 'lancamentos';
+
+        container.innerHTML = `
+            <div class="fade-in">
+                <!-- Sub-Navigation Tabs -->
+                <div class="px-6 pt-4 mb-6">
+                    <div class="flex border-b border-slate-200">
+                        <button onclick="App.setOperacionalSubView('lancamentos')" 
+                                class="px-6 py-3 text-sm font-bold border-b-2 transition-all ${subView === 'lancamentos' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}">
+                            <i class="fa-solid fa-plus-circle mr-2"></i> Lançamento Diário
+                        </button>
+                        <button onclick="App.setOperacionalSubView('historico')" 
+                                class="px-6 py-3 text-sm font-bold border-b-2 transition-all ${subView === 'historico' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}">
+                            <i class="fa-solid fa-clock-rotate-left mr-2"></i> Central de Registros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div id="operacional-content"></div>
+            </div>
+        `;
+
+        const subContainer = document.getElementById('operacional-content');
+        if (subView === 'lancamentos') {
+            this.renderDaily(subContainer);
+        } else {
+            this.renderDailyHistory(subContainer);
+        }
+    },
+
+    setOperacionalSubView(view) {
+        this.state.operacionalSubView = view;
+        this.render();
     },
 
     setPendenciasFilter(filterKey, value) {
@@ -1671,19 +2325,41 @@ const App = {
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-6 flex flex-wrap gap-4 items-center">
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm mb-6 flex flex-wrap gap-6 items-center">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-filter text-slate-400"></i>
-                        <span class="text-sm font-semibold text-slate-600">Filtro de Status:</span>
+                        <span class="text-sm font-semibold text-slate-600">Exibir Status:</span>
                     </div>
                     
-                    <select onchange="App.setDailyStatusFilter(this.value)" class="u-select px-3 py-1.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Todos os Status</option>
-                        <option value="risk" ${this.state.filterDailyStatus === 'risk' ? 'selected' : ''}>Bloqueado / Risco Crítico</option>
-                        <option value="attention" ${this.state.filterDailyStatus === 'attention' ? 'selected' : ''}>Em Atenção / Atraso</option>
-                        <option value="ok" ${this.state.filterDailyStatus === 'ok' ? 'selected' : ''}>Em Andamento (OK)</option>
-                        <option value="healthy" ${this.state.filterDailyStatus === 'healthy' ? 'selected' : ''}>Concluído / Ativo</option>
-                    </select>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" ${this.state.filterDailyStatuses.includes('risk') ? 'checked' : ''} 
+                                   onchange="App.toggleDailyStatusFilter('risk')"
+                                   class="w-4 h-4 text-rose-600 border-slate-300 rounded focus:ring-rose-500">
+                            <span class="text-xs font-bold text-slate-600 group-hover:text-rose-600 transition-colors">Bloqueado / Risco Crítico</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" ${this.state.filterDailyStatuses.includes('attention') ? 'checked' : ''} 
+                                   onchange="App.toggleDailyStatusFilter('attention')"
+                                   class="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-amber-500">
+                            <span class="text-xs font-bold text-slate-600 group-hover:text-amber-500 transition-colors">Em Atenção / Atraso</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" ${this.state.filterDailyStatuses.includes('ok') ? 'checked' : ''} 
+                                   onchange="App.toggleDailyStatusFilter('ok')"
+                                   class="w-4 h-4 text-indigo-500 border-slate-300 rounded focus:ring-indigo-500">
+                            <span class="text-xs font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">Em Andamento (OK)</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="checkbox" ${this.state.filterDailyStatuses.includes('healthy') ? 'checked' : ''} 
+                                   onchange="App.toggleDailyStatusFilter('healthy')"
+                                   class="w-4 h-4 text-emerald-500 border-slate-300 rounded focus:ring-emerald-500">
+                            <span class="text-xs font-bold text-slate-600 group-hover:text-emerald-500 transition-colors">Concluído / Ativo</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4">
@@ -1693,8 +2369,15 @@ const App = {
         `;
     },
 
-    setDailyStatusFilter(status) {
-        this.state.filterDailyStatus = status;
+    toggleDailyStatusFilter(status) {
+        if (!this.state.filterDailyStatuses) this.state.filterDailyStatuses = ['risk', 'attention', 'ok'];
+
+        const idx = this.state.filterDailyStatuses.indexOf(status);
+        if (idx === -1) {
+            this.state.filterDailyStatuses.push(status);
+        } else {
+            this.state.filterDailyStatuses.splice(idx, 1);
+        }
         this.render();
     },
 
@@ -1702,8 +2385,8 @@ const App = {
         let html = '';
         clients.forEach(client => {
             const filteredSpes = client.spes.filter(spe => {
-                if (!this.state.filterDailyStatus) return true;
-                return spe.healthStatus.status === this.state.filterDailyStatus;
+                if (!this.state.filterDailyStatuses || this.state.filterDailyStatuses.length === 0) return true;
+                return this.state.filterDailyStatuses.includes(spe.healthStatus.status);
             });
 
             if (filteredSpes.length === 0) return;
@@ -1755,6 +2438,9 @@ const App = {
                                     ${status.label}
                                 </span>
                                 <span class="text-[10px] text-slate-400 font-medium">${spe.fase}</span>
+                            </div>
+                            <div class="service-badges mt-1">
+                                ${(spe.servicos_contratados || []).map(s => `<span class="service-badge">${this.escapeHtml(s)}</span>`).join('')}
                             </div>
                         </div>
                     </div>
@@ -2618,15 +3304,18 @@ const App = {
             data = data.filter(d => d.razao_social_cliente === this.state.filterClient);
         }
 
-        // Filter by service (includes-based matching)
+        // Filter by KA
+        if (this.state.filterKeyAccount) {
+            data = data.filter(d => d.nome_do_key_account === this.state.filterKeyAccount);
+        }
+
+        // Filter by service (array-based matching)
         if (this.state.filterService) {
             const targetService = this.state.filterService;
             data = data.filter(d => {
                 const servicos = d.servicos_contratados;
                 if (Array.isArray(servicos)) {
                     return servicos.includes(targetService);
-                } else if (typeof servicos === 'string') {
-                    return servicos.split(',').map(s => s.trim()).includes(targetService);
                 }
                 return false;
             });
@@ -2670,8 +3359,20 @@ const App = {
 
                 // Fase e Serviços
                 fase_da_spe: n.fase_da_spe || n.fase || 'Não definida',
-                servicos_contratados: n.servicos_contratados || n.servicos || '',
+                tipologia_spe: n.tipologia_spe || n.tipologia || 'Não definida',
+                servicos_contratados: n.servicos_contratados ? n.servicos_contratados.split(',').map(s => s.trim()) : [],
                 sla_dias_uteis_padrao: parseInt(n.sla_dias_uteis_padrao || n.sla) || 5,
+
+                // IDs Adicionais
+                sonar_business_id: n.sonar_business_id || '',
+                sonar_project_id: n.sonar_project_id || '',
+                id_azo_ativo: n.id_azo_ativo || '',
+                id_azo_operacao: n.id_azo_operacao || '',
+                nome_do_key_account: n.nome_do_key_account || n.key_account || '',
+                gerente_comercial: n.gerente_comercial || '',
+                origem: n.origem || '',
+                prazo_da_politica_de_pagamentos: n.prazo_da_politica_de_pagamentos || '',
+                link_pasta: n.link_pasta || '',
 
                 // Identificadores de Processo
                 process_id: n.process_id || `PROC-${index}`,
@@ -2724,8 +3425,18 @@ const App = {
         const today = new Date().toISOString().split('T')[0];
         return data.map(row => {
             const isConcluded = (row.status_real || '').toLowerCase().includes('conclu');
+
+            // Ensure services is always an array of trimmed strings
+            let services = row.servicos_contratados || [];
+            if (typeof services === 'string') {
+                services = services.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            } else if (!Array.isArray(services)) {
+                services = [];
+            }
+
             return {
                 ...row,
+                servicos_contratados: services,
                 is_delayed: !isConcluded && row.data_prazo_sla && today > row.data_prazo_sla,
                 lead_time: row.conclusao_tarefa ? WorkingHoursEngine.calcBusinessDays(row.criacao_tarefa, row.conclusao_tarefa) : null,
                 aging_bucket: !isConcluded ? WorkingHoursEngine.getAgingBucket(row.criacao_tarefa) : null,
@@ -3044,8 +3755,19 @@ const App = {
                 cnpj_da_spe: n.cnpj_da_spe || n.cnpj || '',
                 fase_da_spe: n.fase_da_spe || n.fase || 'Não definida',
                 status_jornada_cliente: n.status_jornada_cliente || n.status_jornada || 'Em Andamento',
+                grupo_cliente: n.grupo_cliente || n.grupo || '', // NEW FIELD
                 erp: n.erp || '',
                 codigo_uau: parseInt(n.codigo_uau) || null,
+                tipologia_spe: n.tipologia_spe || n.tipologia || 'Não definida',
+                sonar_business_id: n.sonar_business_id || '',
+                sonar_project_id: n.sonar_project_id || '',
+                id_azo_ativo: n.id_azo_ativo || '',
+                id_azo_operacao: n.id_azo_operacao || '',
+                nome_do_key_account: n.nome_do_key_account || n.key_account || '',
+                gerente_comercial: n.gerente_comercial || '',
+                origem: n.origem || '',
+                prazo_da_politica_de_pagamentos: n.prazo_da_politica_de_pagamentos || '',
+                link_pasta: n.link_pasta || '',
                 servicos_contratados: servicosArray, // Now an array!
 
                 // Milestone dates (TtV)
@@ -3149,6 +3871,7 @@ const App = {
                 data_prazo_sla: prazoSLA,
                 conclusao_tarefa: conclusao,
                 nome_pendencia_ativa: n.nome_pendencia_ativa || '',
+                responsavel_direto_tags: n.responsavel_direto_tags || n.area || n.departamento || '',
                 comentario_resolucao_pendencia: comentario,
 
                 // Computed properties
@@ -3164,11 +3887,22 @@ const App = {
                 // Get parent info for task - copy ALL relevant fields
                 const parent = operationsMap[processId];
                 task.razao_social_cliente = parent.razao_social_cliente;
+                task.grupo_cliente = parent.grupo_cliente; // NEW FIELD
                 task.razao_social_da_spe = parent.razao_social_da_spe;
                 task.cnpj_da_spe = parent.cnpj_da_spe;
                 task.fase_da_spe = parent.fase_da_spe;
                 task.erp = parent.erp;
                 task.codigo_uau = parent.codigo_uau;
+                task.tipologia_spe = parent.tipologia_spe;
+                task.sonar_business_id = parent.sonar_business_id;
+                task.sonar_project_id = parent.sonar_project_id;
+                task.id_azo_ativo = parent.id_azo_ativo;
+                task.id_azo_operacao = parent.id_azo_operacao;
+                task.nome_do_key_account = parent.nome_do_key_account;
+                task.gerente_comercial = parent.gerente_comercial;
+                task.origem = parent.origem;
+                task.prazo_da_politica_de_pagamentos = parent.prazo_da_politica_de_pagamentos;
+                task.link_pasta = parent.link_pasta;
                 task.servicos_contratados = parent.servicos_contratados;
                 task.status_jornada_cliente = parent.status_jornada_cliente;
                 task.status_global_processo = parent.status_jornada_cliente; // Alias for global status
@@ -3285,27 +4019,51 @@ const App = {
     populateFilters() {
         // Client filter
         const clientSelect = document.getElementById('client-filter');
-        const clients = [...new Set(this.state.data.map(d => d.razao_social_cliente))].sort();
-        clientSelect.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (clientSelect) {
+            const clients = [...new Set(this.state.data.map(d => d.razao_social_cliente).filter(Boolean))].map(c => c.trim()).sort();
+            clientSelect.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `<option value="${this.escapeAttr(c)}">${this.escapeHtml(c)}</option>`).join('');
+        }
 
-        // Service filter - extract unique services from all operations
-        const serviceSelect = document.getElementById('service-filter');
-        if (serviceSelect) {
-            const allServices = this.extractUniqueServices();
-            serviceSelect.innerHTML = '<option value="">Todos os Serviços</option>' +
-                allServices.map(s => `<option value="${s}">${s}</option>`).join('');
+        // Populate Service Filter
+        const services = this.extractUniqueServices();
+        const serviceFilter = document.getElementById('service-filter');
+        if (serviceFilter) {
+            serviceFilter.innerHTML = '<option value="">Todos os Serviços</option>' +
+                services.map(s => `<option value="${this.escapeAttr(s)}" ${this.state.filterService === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('');
+        }
+
+        // Populate Key Account Filter
+        const kas = [...new Set(this.state.data.map(d => d.nome_do_key_account).filter(Boolean))].map(k => k.trim()).sort();
+        const kaFilter = document.getElementById('ka-filter');
+        if (kaFilter) {
+            kaFilter.innerHTML = '<option value="">Todos os KAs</option>' +
+                kas.map(k => `<option value="${this.escapeAttr(k)}" ${this.state.filterKeyAccount === k ? 'selected' : ''}>${this.escapeHtml(k)}</option>`).join('');
         }
     },
 
-    // Extract unique services from all data
+    setOverviewFilter(filter) {
+        this.state.overviewFilter = filter;
+        this.render();
+    },
+
+    // Extract unique services from all data (Exclusively from process metadata)
     extractUniqueServices() {
         const servicesSet = new Set();
+        const processedProcesses = new Set();
+
         this.state.data.forEach(item => {
-            const servicos = item.servicos_contratados;
-            if (Array.isArray(servicos)) {
-                servicos.forEach(s => servicesSet.add(s));
-            } else if (typeof servicos === 'string' && servicos) {
-                servicos.split(',').forEach(s => servicesSet.add(s.trim()));
+            const pid = item.process_id;
+            if (pid && !processedProcesses.has(pid)) {
+                processedProcesses.add(pid);
+                const servicos = item.servicos_contratados;
+                if (Array.isArray(servicos)) {
+                    servicos.forEach(s => {
+                        if (typeof s === 'string') {
+                            const trimmed = s.trim();
+                            if (trimmed) servicesSet.add(trimmed);
+                        }
+                    });
+                }
             }
         });
         return [...servicesSet].sort();
@@ -3321,35 +4079,44 @@ const App = {
         this.render();
     },
 
+    onKeyAccountFilterChange(val) {
+        this.state.filterKeyAccount = val;
+        this.render();
+    },
+
     renderSidebar() {
         const menu = document.getElementById('sidebar-menu-main');
         menu.innerHTML = `
-            <li class="sidebar-section">PRINCIPAL</li>
+            <li class="sidebar-section">ESTRATÉGICO</li>
             <li id="menu-carteira" class="sidebar-menu-item active" onclick="App.setView('carteira')">
-                <i class="fa-solid fa-briefcase"></i> <span>Carteira</span>
+                <i class="fa-solid fa-briefcase"></i> <span>Acompanhamento Geral</span>
+            </li>
+            <li id="menu-overview" class="sidebar-menu-item" onclick="App.setView('overview')">
+                <i class="fa-solid fa-chart-pie"></i> <span>Painel Executivo</span>
             </li>
             <li id="menu-calendario" class="sidebar-menu-item" onclick="App.setView('calendario')">
                 <i class="fa-solid fa-calendar-days"></i> <span>Calendário</span>
             </li>
-            <li id="menu-daily" class="sidebar-menu-item" onclick="App.setView('daily')">
-                <i class="fa-solid fa-clipboard-check"></i> <span>Daily Operacional</span>
-            </li>
-            <li id="menu-daily-history" class="sidebar-menu-item" onclick="App.setView('daily-history')">
-                <i class="fa-solid fa-book-open"></i> <span>Central de Registros</span>
-            </li>
             
-            <li class="sidebar-section">RELATÓRIOS</li>
-            <li id="menu-overview" class="sidebar-menu-item" onclick="App.setView('overview')">
-                <i class="fa-solid fa-chart-pie"></i> <span>Visão Geral</span>
+            <li class="sidebar-section">OPERAÇÃO</li>
+            <li id="menu-gestao-operacional" class="sidebar-menu-item" onclick="App.setView('gestao-operacional')">
+                <i class="fa-solid fa-clipboard-check"></i> <span>Gestão Operacional</span>
             </li>
-            <li id="menu-esteiras" class="sidebar-menu-item" onclick="App.setView('esteiras')">
-                <i class="fa-solid fa-stream"></i> <span>Esteiras</span>
-            </li>
-            <li id="menu-sla" class="sidebar-menu-item" onclick="App.setView('sla')">
-                <i class="fa-solid fa-clock"></i> <span>SLA & Tempo</span>
+            <li id="menu-gestao-processual" class="sidebar-menu-item" onclick="App.setView('gestao-processual')">
+                <i class="fa-solid fa-microchip"></i> <span>Gestão Processual</span>
             </li>
             <li id="menu-pendencias" class="sidebar-menu-item" onclick="App.setView('pendencias')">
-                <i class="fa-solid fa-exclamation-triangle"></i> <span>Pendências</span>
+                <i class="fa-solid fa-exclamation-triangle"></i> <span>Pendências Críticas</span>
+            </li>
+
+            <li class="sidebar-section">FINANCEIRO</li>
+            <li id="menu-faturamento" class="sidebar-menu-item" onclick="App.setView('faturamento')">
+                <i class="fa-solid fa-file-invoice-dollar"></i> <span>Gestão de Faturamento</span>
+            </li>
+
+            <li class="sidebar-section">QUALIDADE</li>
+            <li id="menu-entregaveis" class="sidebar-menu-item" onclick="App.setView('entregaveis')">
+                <i class="fa-solid fa-clipboard-check"></i> <span>Gestão de Entregáveis</span>
             </li>
         `;
     },
@@ -3526,6 +4293,42 @@ const App = {
     },
 
     renderDailyHistory(container) {
+        // ... (existing code for renderDailyHistory) ...
+        // Note: The actual content of renderDailyHistory is large, so I am just appending the NEW function after it.
+        // In a real multi-replace, I would need to match the end of the file or a specific function.
+        // For this specific tool usage, I will use append or insert logic if possible, or just replace the end of file / last function if I can match it clearly.
+        // However, since I cannot blindly append, I will search for where to insert.
+        // Let's insert it before the end of the App object.
+    },
+
+    // Placeholder View for Future Features
+    renderPlaceholderView(container, title, icon, description) {
+        container.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <i class="fa-solid ${icon} text-4xl text-slate-400"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-700 mb-3">${title}</h2>
+                <p class="text-slate-500 max-w-md text-lg leading-relaxed mb-8">${description}</p>
+                
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 max-w-sm w-full mx-auto flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-500 shadow-sm shrink-0">
+                        <i class="fa-solid fa-helmet-safety"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-xs font-bold text-indigo-800 uppercase tracking-wide">Em Desenvolvimento</p>
+                        <p class="text-xs text-indigo-600">Esta funcionalidade estará disponível na próxima versão do sistema.</p>
+                    </div>
+                </div>
+                
+                <button onclick="window.history.back()" class="mt-12 text-slate-400 hover:text-slate-600 font-semibold text-sm flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        `;
+    },
+
+    updateHistoryFilter(field, value) {
         const journals = this.state.journals || {};
         const allEntries = [];
 
@@ -3541,17 +4344,23 @@ const App = {
         const filterSpe = this.state.historyFilterSpe || '';
         const filterType = this.state.historyFilterType || '';
         const filterStatus = this.state.historyFilterStatus || '';
+        const filterResp = this.state.historyFilterResp || '';
+        const filterEsteira = this.state.historyFilterEsteira || '';
         const filterSearch = (this.state.historyFilterSearch || '').toLowerCase();
 
         const filtered = allEntries.filter(e => {
             if (filterSpe && e.speName !== filterSpe) return false;
             if (filterType && e.subType !== filterType) return false;
             if (filterStatus && (e.status === 'done' ? 'done' : 'todo') !== filterStatus) return false;
+            if (filterResp && e.responsavel !== filterResp) return false;
+            if (filterEsteira && e.esteira !== filterEsteira) return false;
             if (filterSearch && !e.text.toLowerCase().includes(filterSearch)) return false;
             return true;
         }).sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date));
 
         const spes = [...new Set(allEntries.map(e => e.speName))].sort();
+        const responsibles = [...new Set(allEntries.map(e => e.responsavel).filter(Boolean))].sort();
+        const esteiras = [...new Set(allEntries.map(e => e.esteira).filter(Boolean))].sort();
 
         container.innerHTML = `
             <div class="p-6 fade-in max-w-7xl mx-auto">
@@ -3563,8 +4372,8 @@ const App = {
                 </div>
 
                 <!-- Filters -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div class="md:col-span-1">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
                         <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Buscar no Texto</label>
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -3579,23 +4388,37 @@ const App = {
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Operação / SPE</label>
-                        <select onchange="App.updateHistoryFilter('spe', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <select onchange="App.updateHistoryFilter('spe', this.value)" class="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[150px]">
                             <option value="">Todas as SPEs</option>
                             ${spes.map(s => `<option value="${this.escapeAttr(s)}" ${filterSpe === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('')}
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo de Registro</label>
-                        <select onchange="App.updateHistoryFilter('type', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                            <option value="">Todos os Tipos</option>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Área / Esteira</label>
+                        <select onchange="App.updateHistoryFilter('esteira', this.value)" class="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[150px]">
+                            <option value="">Todas as Áreas</option>
+                            ${esteiras.map(est => `<option value="${this.escapeAttr(est)}" ${filterEsteira === est ? 'selected' : ''}>${this.escapeHtml(est)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Responsável</label>
+                        <select onchange="App.updateHistoryFilter('responsavel', this.value)" class="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[150px]">
+                            <option value="">Todos</option>
+                            ${responsibles.map(r => `<option value="${this.escapeAttr(r)}" ${filterResp === r ? 'selected' : ''}>${this.escapeHtml(r)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo</label>
+                        <select onchange="App.updateHistoryFilter('type', this.value)" class="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">Todos</option>
                             <option value="todo" ${filterType === 'todo' ? 'selected' : ''}>Ação (To-do)</option>
                             <option value="report" ${filterType === 'report' ? 'selected' : ''}>Relato (Report)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Status de Ação</label>
-                        <select onchange="App.updateHistoryFilter('status', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                            <option value="">Todos os Status</option>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Status</label>
+                        <select onchange="App.updateHistoryFilter('status', this.value)" class="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">Todos</option>
                             <option value="todo" ${filterStatus === 'todo' ? 'selected' : ''}>Pendente</option>
                             <option value="done" ${filterStatus === 'done' ? 'selected' : ''}>Concluído</option>
                         </select>
@@ -3685,11 +4508,13 @@ const App = {
     },
 
     updateHistoryFilter(field, value) {
-        if (!this.state.historyFilters) this.state.historyFilters = {}; // Cleanup other state members if preferred
+        if (!this.state.historyFilters) this.state.historyFilters = {};
         if (field === 'spe') this.state.historyFilterSpe = value;
         if (field === 'type') this.state.historyFilterType = value;
         if (field === 'status') this.state.historyFilterStatus = value;
         if (field === 'search') this.state.historyFilterSearch = value;
+        if (field === 'responsavel') this.state.historyFilterResp = value;
+        if (field === 'esteira') this.state.historyFilterEsteira = value;
         this.render();
     },
 

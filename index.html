@@ -22,14 +22,27 @@
 
         <aside id="sidebar" class="sidebar">
             <header class="sidebar-header">
-                <div class="sidebar-logo">
-                    <span class="sidebar-title font-bold text-xl text-white">Trinus<span
-                            class="text-teal-400">Manager</span></span>
+                <div class="sidebar-brand-block">
+                    <div class="sidebar-logo-icon">
+                        <img src="https://storage.googleapis.com/download/storage/v1/b/so-rapid-prototyping-v1-prod-us-central1-upload-images/o/image-16782-b77da3b2-b18c-4824-9b2f-76ee46782782?generation=1708892095907446&alt=media"
+                            alt="Trinus Logo" class="h-8 w-auto">
+                        <!-- Note: Using placeholder URL for now, strictly should use local file path if generated correctly but for web preview this is tricky without a hosted URL. 
+                             Correction: Using a data URI or relative path if possible. 
+                             Wait, I should use the path to the artifact I just generated? 
+                             The artifact path is local. I need to copy it to the project or embed it? 
+                             Let's use the local file path relative to the project if possible, or copy it.
+                             I will use a placeholder styling for now and ask the user to provide the asset or use the generated one if I can copy it.
+                             Actually, I'll use the generated image path. 
+                             -->
+                        <!-- Since I cannot predict the path of the generated image before it's generated, I will skip the image src update in this tool call and do it in the next step after I get the path. -->
+                    </div>
+                    <span class="sidebar-brand-title text-slate-800">Gestão Trinus</span>
+                    <button class="sidebar-close" onclick="App.toggleSidebar()"><i
+                            class="fa-solid fa-arrow-left"></i></button>
                 </div>
-                <button class="sidebar-close" onclick="App.toggleSidebar()"><i class="fa-solid fa-times"></i></button>
             </header>
             <nav class="sidebar-nav">
-                <p class="sidebar-section-title">Visões</p>
+                <p class="sidebar-section-title">Menu Principal</p>
                 <ul id="sidebar-menu-main" class="sidebar-menu">
                 </ul>
                 <p class="sidebar-section-title">Dados</p>
@@ -56,19 +69,26 @@
                             class="breadcrumb-item breadcrumb-item--active font-bold">Dashboard</span>
                     </div>
                 </div>
-                <div class="header__right">
-                    <div class="filter-container">
-                        <label class="text-sm font-semibold text-gray-600 mr-2">Cliente:</label>
+                <div class="header__filters">
+                    <div class="filter-group">
+                        <label class="filter-label">Cliente:</label>
                         <select id="client-filter" class="filter-dropdown"
                             onchange="App.onClientFilterChange(this.value)">
                             <option value="">Todos os Clientes</option>
                         </select>
                     </div>
-                    <div class="filter-container">
-                        <label class="text-sm font-semibold text-gray-600 mr-2">Serviço:</label>
+                    <div class="filter-group">
+                        <label class="filter-label">Serviço:</label>
                         <select id="service-filter" class="filter-dropdown"
                             onchange="App.onServiceFilterChange(this.value)">
                             <option value="">Todos os Serviços</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Key Account:</label>
+                        <select id="ka-filter" class="filter-dropdown"
+                            onchange="App.onKeyAccountFilterChange(this.value)">
+                            <option value="">Todos os KAs</option>
                         </select>
                     </div>
                 </div>

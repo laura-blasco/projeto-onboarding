@@ -66,61 +66,91 @@ body {
     padding: 24px;
 }
 
-/* Sidebar (Estilo Profissional - App 2) */
+/* Sidebar (Trinus Design System) */
 .sidebar {
     width: var(--sidebar-width);
-    background: #1e293b;
-    color: white;
+    background: var(--color-sidebar-bg);
+    color: var(--color-text);
     display: flex;
     flex-direction: column;
     transition: transform 0.3s;
     z-index: 20;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    border-right: 1px solid var(--color-border);
 }
 
 .sidebar-header {
-    height: 64px;
+    height: auto;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background: transparent;
+    border-bottom: none;
+}
+
+.sidebar-brand-block {
+    /* background: var(--sidebar-header-bg); Remove if undefined, or use transparent */
+    background: transparent;
+    color: var(--color-text);
+    /* Ensure contrast */
+    padding: 20px 24px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: flex-start;
+    /* Align logo and text left */
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.sidebar-brand-title {
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
 .sidebar-menu {
     list-style: none;
-    margin-top: 8px;
+    margin-top: 0;
 }
 
 .sidebar-menu-item {
-    padding: 12px 20px;
+    padding: 12px 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
     transition: 0.2s;
-    color: #94a3b8;
-    border-left: 3px solid transparent;
-    font-size: 0.9rem;
+    color: var(--color-text-light);
+    border-left: 4px solid transparent;
+    /* Trinus active indicator style */
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
-.sidebar-menu-item:hover,
+.sidebar-menu-item:hover {
+    background: #f1f5f9;
+    color: var(--color-primary);
+}
+
 .sidebar-menu-item.active {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
+    background: #eff6ff;
+    /* Light blue background */
+    color: var(--color-primary);
     border-left-color: var(--color-primary);
+    font-weight: 600;
 }
 
 .sidebar-menu-item i {
     width: 20px;
     text-align: center;
+    font-size: 1.1rem;
 }
 
 .sidebar-section-title {
-    padding: 24px 20px 8px;
-    font-size: 0.7rem;
+    padding: 16px 24px 8px;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    color: #64748b;
+    color: #94a3b8;
     letter-spacing: 0.05em;
     font-weight: 700;
 }
@@ -129,17 +159,16 @@ body {
     display: none;
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: white;
+    /* Contrast against blue header */
     font-size: 1.2rem;
     cursor: pointer;
     padding: 8px;
-    border-radius: 6px;
     transition: 0.2s;
 }
 
 .sidebar-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    opacity: 0.8;
 }
 
 .mobile-toggle {
@@ -155,33 +184,59 @@ body {
 /* Header Top */
 .header {
     height: 64px;
-    background: white;
+    background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 32px;
     flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .header__left {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1;
+}
+
+.header__filters {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    justify-content: flex-end;
+    /* Align right */
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    white-space: nowrap;
 }
 
 .filter-dropdown {
-    padding: 6px 12px;
+    min-width: 140px;
+    padding: 8px 12px;
     border: 1px solid var(--color-border);
     border-radius: 6px;
     outline: none;
     background: white;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--color-text);
     cursor: pointer;
+    transition: 0.2s;
 }
 
-.filter-dropdown:focus {
+.filter-dropdown:hover {
     border-color: var(--color-primary);
 }
 
@@ -189,32 +244,44 @@ body {
 .stats-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    padding: 24px;
-    background: #0f172a;
-    color: white;
+    gap: 24px;
+    padding: 2px 32px 32px 32px;
+    /* Top padding reduced */
+    background: var(--color-bg);
+    /* Use page BG, not dark */
+    color: var(--color-text);
     flex-shrink: 0;
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 16px;
+    background: white;
+    padding: 20px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Subtle shadow */
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .stat-icon {
     width: 48px;
     height: 48px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #f1f5f9;
+    /* Light Gray */
+    color: var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
 }
 
 .stat-content {
@@ -226,12 +293,48 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     line-height: 1;
+    color: var(--color-text);
 }
 
 .stat-label {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--color-text-light);
     margin-top: 4px;
+    font-weight: 500;
+}
+
+/* Special Cards (Gradients) */
+.stat-card--primary {
+    background: var(--gradient-credito);
+    color: white;
+    border: none;
+}
+
+.stat-card--primary .stat-value,
+.stat-card--primary .stat-label {
+    color: white;
+}
+
+.stat-card--primary .stat-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.stat-card--secondary {
+    background: var(--gradient-equity);
+    /* Teal */
+    color: white;
+    border: none;
+}
+
+.stat-card--secondary .stat-value,
+.stat-card--secondary .stat-label {
+    color: white;
+}
+
+.stat-card--secondary .stat-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 /* ============================================
@@ -647,6 +750,29 @@ body {
     font-weight: 700;
 }
 
+/* Service Tags (Badges) */
+.service-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.service-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+.service-badge--primary {
+    background: #e0e7ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+}
+
 .sla-good {
     background: #dcfce7;
     color: #15803d;
@@ -837,10 +963,11 @@ body {
     display: block;
 }
 
-/* SPE Row in Portfolio */
+/* SPE Row in Portfolio (Trinus List Style) */
 .portfolio-spe-row {
     display: grid;
-    grid-template-columns: 1.5fr 2fr 1fr 1fr 40px;
+    grid-template-columns: minmax(280px, 1.5fr) minmax(300px, 2fr) 140px 140px 100px;
+    /* Name/Info | Journey | Status | Date | Action */
     gap: 16px;
     align-items: center;
     padding: 16px 24px;
@@ -857,68 +984,232 @@ body {
     background: #f8fafc;
 }
 
-.spe-info {
+.spe-info-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.spe-icon-box {
+    width: 40px;
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.spe-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .spe-name {
     font-weight: 600;
     color: var(--color-text);
+    font-size: 0.95rem;
 }
 
-.spe-meta {
+.spe-meta-row {
     display: flex;
+    align-items: center;
     gap: 8px;
+}
+
+.spe-cnpj {
     font-size: 0.75rem;
-    color: var(--color-text-light);
+    color: #94a3b8;
+    font-family: monospace;
 }
 
-.spe-fase {
-    background: #f1f5f9;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-/* Journey Bar (TtV) */
-.journey-bar {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.journey-milestone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.milestone-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+/* Columns */
+.spe-col-type,
+.spe-col-update,
+.spe-col-action {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
-    transition: transform 0.2s;
 }
 
-.milestone-label {
-    font-size: 0.6rem;
+.spe-col-update {
+    color: #64748b;
+    font-size: 0.85rem;
+    gap: 8px;
+}
+
+/* Phase Tag (Fase) */
+.spe-fase {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+}
+
+/* Service Badges (Purple) */
+.service-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+}
+
+.service-badge--primary {
+    background: #ede9fe;
+    /* Violet 100 */
+    color: #6d28d9;
+    /* Violet 700 */
+    border: none;
+}
+
+.service-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge--completed {
+    background: #eff6ff;
+    /* Blue 50 */
+    color: #1d4ed8;
+    /* Blue 700 */
+    border-color: #dbeafe;
+}
+
+.status-badge--on-track {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.status-badge--at-risk {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #fde68a;
+}
+
+.status-badge--delayed {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* Buttons */
+.u-btn-outline {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: 0.2s;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.u-btn-outline:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: #eff6ff;
+}
+
+/* Journey Bar (TtV) - Refined */
+.ttv-journey {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 0 16px;
+    width: 100%;
+    min-width: 200px;
+}
+
+.ttv-journey__line {
+    position: absolute;
+    top: 14px;
+    /* Align with center of 12px dot + padding approx */
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+
+.ttv-journey__milestone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+
+.ttv-journey__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #cbd5e1;
+    transition: all 0.2s;
+    box-shadow: 0 0 0 4px white;
+    /* Cleaner break */
+}
+
+.ttv-journey__label {
+    font-size: 0.65rem;
     color: #94a3b8;
     text-align: center;
     white-space: nowrap;
 }
 
-.journey-line {
-    flex: 1;
-    height: 2px;
-    min-width: 16px;
-    background: #e2e8f0;
-    margin-top: -16px;
+/* Milestone States */
+.ttv-journey__dot--completed {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.ttv-journey__label--completed {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.ttv-journey__dot--pending {
+    background: white;
+    border-color: #cbd5e1;
+}
+
+.ttv-journey__dot--delayed {
+    background: #ef4444;
+    border-color: #ef4444;
+    animation: pulse 2s infinite;
 }
 
 /* Milestone States */
@@ -1477,18 +1768,33 @@ body {
 
 @media (max-width: 1200px) {
     .portfolio-spe-row {
-        grid-template-columns: 1fr 1.5fr 1fr 40px;
+        /* Hide Update Column on smaller screens */
+        grid-template-columns: minmax(250px, 1.5fr) 2fr 120px 100px;
     }
 
-    .spe-activity {
-        display: none;
+    .spe-col-update {
+        display: none !important;
     }
 }
 
 @media (max-width: 900px) {
     .portfolio-spe-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 100px;
         gap: 12px;
+    }
+
+    .ttv-journey,
+    .spe-col-status,
+    .spe-col-update {
+        display: none !important;
+    }
+
+    .portfolio-spe-row {
+        position: relative;
+    }
+
+    .spe-col-action {
+        justify-content: flex-end;
     }
 
     .journey-bar {
