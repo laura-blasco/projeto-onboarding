@@ -130,10 +130,20 @@ const App = {
         'gestao-operacional': 'Gestão Operacional',
         'gestao-processual': 'Gestão Processual',
         'pendencias': 'Pendências',
-        'calendario': 'Calendário',
+        'calendario': 'Gestão de Projetos',
         'daily-history': 'Histórico de Registros',
         'faturamento': 'Gestão de Faturamento',
         'entregaveis': 'Gestão de Entregáveis'
+    },
+
+    // Definição das Esteiras (Project Tracks)
+    esteirasConfig: {
+        'viabilidade': { label: 'Viabilidade', sla: 5, color: 'bg-blue-500', icon: 'fa-check-circle' },
+        'juridico': { label: 'Jurídico', sla: 10, color: 'bg-purple-500', icon: 'fa-gavel' },
+        'financeiro': { label: 'Financeiro', sla: 7, color: 'bg-emerald-500', icon: 'fa-dollar-sign' },
+        'engenharia': { label: 'Engenharia', sla: 15, color: 'bg-amber-500', icon: 'fa-hard-hat' },
+        'comercial': { label: 'Comercial', sla: 5, color: 'bg-indigo-500', icon: 'fa-handshake' },
+        'carteira': { label: 'Carteira', sla: 3, color: 'bg-teal-500', icon: 'fa-briefcase' }
     },
 
     // Definição dos Marcos de Jornada (TtV)
@@ -186,7 +196,86 @@ const App = {
             origem: "Indicação",
             prazo_da_politica_de_pagamentos: "30 dias",
             link_pasta: "https://sharepoint.com/spe1",
-            grupo_cliente: "Diamante"
+            grupo_cliente: "Diamante",
+            // NEW: Critical Data for Gantt - Source of Truth
+            esteiras_analitico: [
+                {
+                    identificacao: "ID-001",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Viabilidade",
+                    esteira: "Viabilidade",
+                    status_esteira_detalhado: "Concluído",
+                    detalhe_situacao: "Aprovado com ressalvas",
+                    comentario_pendencia: null,
+                    data_inicio: "2026-01-15",
+                    data_previsao_entrega: "2026-01-20",
+                    data_conclusao: "2026-01-18",
+                    sla_esteira_dias: 5
+                },
+                {
+                    identificacao: "ID-002",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Jurídico",
+                    esteira: "Jurídico",
+                    status_esteira_detalhado: "Em Andamento",
+                    detalhe_situacao: "Análise contratual",
+                    comentario_pendencia: "Aguardando retorno do cliente",
+                    data_inicio: "2026-01-19",
+                    data_previsao_entrega: "2026-02-05",
+                    data_conclusao: null,
+                    sla_esteira_dias: 10
+                },
+                {
+                    identificacao: "ID-003",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Financeiro",
+                    esteira: "Financeiro",
+                    status_esteira_detalhado: "Pendente",
+                    detalhe_situacao: "Aguardando documentação",
+                    comentario_pendencia: null,
+                    data_inicio: null,
+                    data_previsao_entrega: "2026-02-10",
+                    data_conclusao: null,
+                    sla_esteira_dias: 7
+                },
+                {
+                    identificacao: "ID-004",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Carteira",
+                    esteira: "Carteira",
+                    status_esteira_detalhado: "Bloqueado",
+                    detalhe_situacao: "Dependência de Financeiro",
+                    comentario_pendencia: null,
+                    data_inicio: null,
+                    data_previsao_entrega: null,
+                    data_conclusao: null,
+                    sla_esteira_dias: 15
+                }
+            ]
         },
         {
             id: "2",
@@ -226,7 +315,66 @@ const App = {
             origem: "Indicação",
             prazo_da_politica_de_pagamentos: "30 dias",
             link_pasta: "https://sharepoint.com/spe1",
-            grupo_cliente: "Diamante"
+            grupo_cliente: "Diamante",
+            esteiras_analitico: [
+                {
+                    identificacao: "ID-005",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Viabilidade",
+                    esteira: "Viabilidade",
+                    status_esteira_detalhado: "Concluído",
+                    detalhe_situacao: "Aprovado",
+                    comentario_pendencia: null,
+                    data_inicio: "2026-01-10",
+                    data_previsao_entrega: "2026-01-15",
+                    data_conclusao: "2026-01-14",
+                    sla_esteira_dias: 5
+                },
+                {
+                    identificacao: "ID-006",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Jurídico",
+                    esteira: "Jurídico",
+                    status_esteira_detalhado: "Concluído",
+                    detalhe_situacao: "Minuta Aprovada",
+                    comentario_pendencia: null,
+                    data_inicio: "2026-01-15",
+                    data_previsao_entrega: "2026-01-25",
+                    data_conclusao: "2026-01-24",
+                    sla_esteira_dias: 10
+                },
+                {
+                    identificacao: "ID-007",
+                    nome_processo: "Onboarding Jardin",
+                    process_id: "PROC-001",
+                    razao_social_cliente: "DEMO CONSTRUTORA LTDA",
+                    razao_social_da_spe: "SPE Residencial Jardins",
+                    fase_da_spe: "Implantação",
+                    erp: "SAP",
+                    status_global_processo: "Em Andamento",
+                    etapa: "Financeiro",
+                    esteira: "Financeiro",
+                    status_esteira_detalhado: "Em Andamento",
+                    detalhe_situacao: "Coletando assinaturas",
+                    comentario_pendencia: null,
+                    data_inicio: "2026-01-25",
+                    data_previsao_entrega: "2026-02-15",
+                    data_conclusao: null,
+                    sla_esteira_dias: 7
+                }
+            ]
         },
         {
             id: "3",
@@ -353,6 +501,13 @@ const App = {
                     s.toLowerCase().includes('pós-venda')
                 );
                 return hasService || spe.data_inicio_carteira;
+            }
+            if (m.key === 'data_inicio_viabilidade') {
+                const hasService = services.some(s =>
+                    s.toLowerCase().includes('viabilidade') ||
+                    s.toLowerCase().includes('estudo')
+                );
+                return hasService || spe.data_inicio_viabilidade;
             }
             return true;
         });
@@ -484,8 +639,14 @@ const App = {
                     erp: task.erp,
                     codigo_uau: task.codigo_uau,
                     servicos_contratados: task.servicos_contratados,
+                    esteiras_analitico: task.esteiras_analitico || [], // Bubble up analytical data
                     tasks: []
                 };
+            } else if (task.esteiras_analitico && task.esteiras_analitico.length > 0) {
+                // If another task has the analytical data, merge it (prioritizing existing if not empty)
+                if (grouped[clientName].spes[speName].esteiras_analitico.length === 0) {
+                    grouped[clientName].spes[speName].esteiras_analitico = task.esteiras_analitico;
+                }
             }
             grouped[clientName].spes[speName].tasks.push(task);
         });
@@ -2954,7 +3115,7 @@ const App = {
         return html;
     },
 
-    // --- VIEW: CALENDAR (Grid System Portado da App 1) ---
+    // --- VIEW: GESTÃO DE PROJETOS (New Gantt) ---
     renderCalendar(container) {
         const year = this.state.currentMonth.getFullYear();
         const month = this.state.currentMonth.getMonth();
@@ -2966,6 +3127,20 @@ const App = {
         const todayStr = new Date().toISOString().split('T')[0];
 
         // 1. Navigation Toolbar
+        // Dynamic Legend: Get unique tracks from actual data
+        const activeTracks = new Set();
+        this.getFilteredData().forEach(item => {
+            if (item.esteiras_analitico) {
+                item.esteiras_analitico.forEach(t => activeTracks.add(t.esteira));
+            }
+        });
+        const legendTracks = Array.from(activeTracks);
+
+        // Fallback if no data
+        if (legendTracks.length === 0) {
+            ['Viabilidade', 'Jurídico', 'Financeiro', 'Carteira'].forEach(t => legendTracks.push(t));
+        }
+
         const toolbar = document.createElement('div');
         toolbar.className = 'flex items-center justify-between mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-200';
         toolbar.innerHTML = `
@@ -2977,157 +3152,211 @@ const App = {
                     <button onclick="App.navMonth(1)" class="w-8 h-8 flex items-center justify-center hover:bg-white hover:shadow-sm rounded-md text-slate-600 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-            <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Concluído</span>
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Em Andamento</span>
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span> Atraso</span>
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span> Bloqueio</span>
+            <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider overflow-x-auto max-w-[600px] hide-scrollbar">
+                <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded border border-slate-100 shrink-0">
+                    <div class="w-3 h-3 bg-slate-200 border border-slate-300"></div> Feriado / Fim de Semana
+                </div>
+                ${legendTracks.map(trackName => {
+            // Start finding config match
+            const trackKeyMatch = Object.keys(this.esteirasConfig).find(k => k.toLowerCase() === trackName.toLowerCase()) || 'padrao';
+            const config = this.esteirasConfig[trackKeyMatch] || { label: trackName, color: 'bg-slate-400' };
+            return `<span class="flex items-center gap-1.5 shrink-0"><span class="w-2.5 h-2.5 rounded-full ${config.color}"></span> ${trackName}</span>`;
+        }).join('')}
             </div>
         `;
         container.appendChild(toolbar);
 
         // 2. Gantt Wrapper
         const wrapper = document.createElement('div');
-        wrapper.className = 'gantt-wrapper fade-in';
+        wrapper.className = 'gantt-wrapper fade-in flex flex-col h-full overflow-hidden bg-white rounded-xl shadow-sm border border-slate-200';
 
         // 2.1 Header
         const header = document.createElement('div');
-        header.className = 'gantt-header sticky top-0 z-30';
+        header.className = 'gantt-header flex border-b border-slate-200 bg-slate-50 sticky top-0 z-20';
 
+        // Sidebar Header
+        const sidebarHeader = document.createElement('div');
+        sidebarHeader.className = 'w-[300px] shrink-0 p-3 font-bold text-xs uppercase text-slate-500 border-r border-slate-200 flex items-center bg-slate-50';
+        sidebarHeader.innerText = 'Projetos & Esteiras';
+        header.appendChild(sidebarHeader);
+
+        // Timeline Header
+        const timelineHeader = document.createElement('div');
+        timelineHeader.className = 'flex flex-1 overflow-hidden';
         let daysHtml = '';
         for (let d = 1; d <= daysInMonth; d++) {
             const dateObj = new Date(year, month, d);
+            const dateStr = dateObj.toISOString().split('T')[0];
             const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-            const isToday = dateObj.toISOString().split('T')[0] === todayStr;
+            const isHoliday = WorkingHoursEngine.HOLIDAYS.includes(dateStr);
+            const isToday = dateStr === todayStr;
+
+            let classes = 'flex flex-col items-center justify-center h-12 border-r border-slate-100 shrink-0';
+            if (isWeekend || isHoliday) classes += ' bg-slate-100 text-slate-400';
+            if (isToday) classes += ' bg-indigo-50 text-indigo-600 font-bold';
+
             daysHtml += `
-                <div class="gantt-day-header ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}">
-                    <span class="gantt-day-name">${dayNames[dateObj.getDay()]}</span>
-                    <span class="gantt-day-num">${d}</span>
+                <div class="${classes}" style="width: ${colWidth}px;">
+                    <span class="text-[9px] uppercase">${dayNames[dateObj.getDay()]}</span>
+                    <span class="text-sm leading-none">${d}</span>
                 </div>
             `;
         }
-
-        header.innerHTML = `
-            <div class="gantt-header-sidebar">Projetos</div>
-            <div class="gantt-header-days">${daysHtml}</div>
-        `;
+        timelineHeader.innerHTML = `<div class="flex" id="gantt-header-track">${daysHtml}</div>`;
+        header.appendChild(timelineHeader);
         wrapper.appendChild(header);
 
         // 2.2 Content Area
         const viewport = document.createElement('div');
-        viewport.className = 'gantt-viewport';
+        viewport.className = 'gantt-viewport flex flex-1 overflow-auto relative';
 
-        const timeline = document.createElement('div');
-        timeline.className = 'gantt-timeline-container';
-        timeline.id = 'gantt-timeline';
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'flex flex-col min-w-full';
+
+        // Background Grid
+        const gridBackground = document.createElement('div');
+        gridBackground.className = 'absolute inset-0 flex pointer-events-none z-0 ml-[300px] h-full';
+        let gridHtml = '';
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month, d);
+            const dateStr = dateObj.toISOString().split('T')[0];
+            const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+            const isHoliday = WorkingHoursEngine.HOLIDAYS.includes(dateStr);
+
+            let bgClass = 'border-r border-slate-50 h-full shrink-0';
+            if (isWeekend || isHoliday) bgClass += ' bg-slate-50/50 repeating-linear-gradient(45deg,transparent,transparent 5px,#f1f5f9 5px,#f1f5f9 10px)';
+
+            gridHtml += `<div class="${bgClass}" style="width: ${colWidth}px;"></div>`;
+        }
+        gridBackground.innerHTML = gridHtml;
+        viewport.appendChild(gridBackground);
+
 
         // 3. Process Data
-        const visibleData = this.getFilteredData();
-        const speMap = {};
+        const groupedData = this.groupByClientAndSpe();
 
-        visibleData.forEach(task => {
-            const spe = task.razao_social_da_spe;
-            if (!spe) return;
-            if (!speMap[spe]) {
-                speMap[spe] = {
-                    name: spe,
-                    start: task.data_kick_off || task.data_inicio_jornada || task.criacao_tarefa,
-                    end: task.conclusao_tarefa || task.data_prazo_sla,
-                    status: task.status_global_processo || 'Em Andamento',
-                    tasks: []
-                };
-            }
-            speMap[spe].tasks.push(task);
+        let rowsHtml = '';
 
-            // Expand company range
-            const tStart = task.data_inicio_jornada || task.criacao_tarefa;
-            const tEnd = task.conclusao_tarefa || task.data_prazo_sla;
-            if (tStart && (!speMap[spe].start || tStart < speMap[spe].start)) speMap[spe].start = tStart;
-            if (tEnd && (!speMap[spe].end || tEnd > speMap[spe].end)) speMap[spe].end = tEnd;
-        });
-
-        // 4. Render Rows
-        Object.values(speMap).forEach(spe => {
-            const isExpanded = this.state.expandedItems[spe.name];
-
-            // Render SPE Row
-            const row = document.createElement('div');
-            row.className = 'gantt-row';
-            row.innerHTML = `
-                <div class="gantt-row-label">
-                    <div class="flex items-center flex-1 h-full min-w-0" onclick="App.toggleGanttRow('${this.escapeAttr(spe.name)}')">
-                        <span class="gantt-expand-btn">
-                            <i class="fa-solid fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
-                        </span>
-                        <span class="truncate">${spe.name}</span>
+        groupedData.forEach(client => {
+            // Render Client Header
+            rowsHtml += `
+                <div class="flex border-b border-slate-100 bg-slate-50/80 sticky left-0 z-10">
+                    <div class="w-[300px] shrink-0 p-2 font-bold text-slate-700 text-sm flex items-center gap-2 border-r border-slate-200 pl-4">
+                        <i class="fa-solid fa-building text-slate-400"></i> ${this.escapeHtml(client.name)}
                     </div>
-                    ${spe.start ? `
-                        <button onclick="App.goToSpeKickoff('${this.escapeAttr(spe.name)}', '${spe.start}')" 
-                                class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
-                                title="Ir para o Kick-off">
-                            <i class="fa-solid fa-house-chimney text-xs"></i>
-                        </button>
-                    ` : ''}
-                </div>
-                <div class="gantt-row-grid">
-                    ${this.renderGanttBar(spe.start, spe.end, spe.status, spe.name, year, month, daysInMonth)}
+                     <div class="flex-1"></div> 
                 </div>
             `;
-            timeline.appendChild(row);
 
-            // Render Sub-Rows (Esteiras) if expanded
-            if (isExpanded) {
-                // Determine source of tracks: use the analytical esteiras array from the parent data if possible
-                const parentSpe = this.state.data.find(d => d.razao_social_da_spe === spe.name);
-                const esteiras = parentSpe?.esteiras || [];
+            client.spes.forEach(spe => {
+                const isExpanded = this.state.expandedItems[spe.name] !== false;
+                const speKey = this.escapeAttr(spe.name);
 
-                const tracksToRender = esteiras.length > 0 ? esteiras : this.groupTasksIntoTracks(spe.tasks);
+                // Data now available directly on SPE object due to groupByClientAndSpe fix
+                const esteirasAnalitico = spe.esteiras_analitico || [];
 
-                tracksToRender.forEach(est => {
-                    const estStart = est.data_inicio || this.getMinDate(est.tasks || [], 'data_inicio_jornada', 'criacao_tarefa');
-                    const estEnd = est.data_conclusao || est.data_previsao_entrega || this.getMaxDate(est.tasks || [], 'conclusao_tarefa', 'data_prazo_sla');
-
-                    if (!estStart || !estEnd) return;
-
-                    const subRow = document.createElement('div');
-                    subRow.className = 'gantt-row gantt-sub-row';
-                    subRow.innerHTML = `
-                        <div class="gantt-row-label">
-                            <i class="fa-solid fa-arrow-turn-up rotate-90 scale-75 mr-2 opacity-50"></i>
-                            <span class="truncate">${est.esteira || est.name}</span>
+                // SPE Header Row
+                rowsHtml += `
+                    <div class="flex border-b border-slate-100 hover:bg-slate-50 transition-colors group relative z-10">
+                        <div class="w-[300px] shrink-0 p-2 pl-8 flex items-center justify-between border-r border-slate-200 bg-white sticky left-0 cursor-pointer" onclick="App.toggleAccordion('${speKey}')">
+                            <span class="font-semibold text-slate-700 text-sm truncate" title="${this.escapeHtml(spe.name)}">${this.escapeHtml(spe.name)}</span>
+                            <i class="fa-solid fa-chevron-${isExpanded ? 'down' : 'right'} text-slate-400 text-xs"></i>
                         </div>
-                        <div class="gantt-row-grid">
-                            ${this.renderGanttBar(estStart, estEnd, 'sub', est.esteira || est.name, year, month, daysInMonth, true)}
+                        <div class="flex-1 relative h-10">
                         </div>
-                    `;
-                    timeline.appendChild(subRow);
-                });
-            }
+                    </div>
+                `;
+
+                if (isExpanded) {
+                    if (esteirasAnalitico.length > 0) {
+                        // Use Source of Truth
+                        esteirasAnalitico.forEach(track => {
+                            // Match config or use default
+                            const trackKeyMatch = Object.keys(this.esteirasConfig).find(k => k.toLowerCase() === track.esteira.toLowerCase()) || 'padrao';
+                            const trackConfig = this.esteirasConfig[trackKeyMatch] || { label: track.esteira, color: 'bg-slate-400', icon: 'fa-tasks', sla: 0 };
+
+                            // Dates from Data (NO INVENTION)
+                            const startDate = track.data_inicio;
+                            const endDate = track.data_conclusao || track.data_previsao_entrega;
+                            const isForecast = !track.data_conclusao;
+
+                            if (!startDate && !endDate) return;
+
+                            // Calculate Dates (Fallback logic for view bounds)
+                            const startObj = new Date(startDate || endDate);
+                            const endObj = new Date(endDate || startDate);
+
+                            const monthStart = new Date(year, month, 1);
+                            const monthEnd = new Date(year, month + 1, 0);
+
+                            if (endObj < monthStart || startObj > monthEnd) return;
+
+                            const renderStart = startObj < monthStart ? monthStart : startObj;
+                            const renderEnd = endObj > monthEnd ? monthEnd : endObj;
+
+                            const startDay = renderStart.getDate();
+                            const distinctDays = Math.max(1, Math.ceil((renderEnd - renderStart) / (1000 * 60 * 60 * 24)) + 1);
+
+                            const widthIdx = distinctDays;
+                            const leftPos = (startDay - 1) * colWidth;
+                            const widthPx = widthIdx * colWidth;
+
+                            // Status Mapping
+                            let colorClass = trackConfig.color;
+                            const status = (track.status_esteira_detalhado || '').toLowerCase();
+
+                            if (status.includes('conclu')) colorClass = 'bg-emerald-500';
+                            else if (status.includes('bloq') || status.includes('suspen')) colorClass = 'bg-rose-500';
+                            else if (status.includes('atras') || status.includes('risco')) colorClass = 'bg-amber-500';
+                            else if (status.includes('pendente')) colorClass = 'bg-slate-400';
+                            else colorClass = 'bg-indigo-500'; // Default active
+
+                            // Render Track Row
+                            rowsHtml += `
+                                <div class="flex border-b border-dashed border-slate-200 hover:bg-slate-50/50 transition-colors h-10 relative z-0">
+                                    <div class="w-[300px] shrink-0 p-2 pl-12 flex items-center gap-2 border-r border-slate-200 bg-white/50 sticky left-0 text-xs text-slate-500">
+                                        <i class="fa-solid ${trackConfig.icon} opacity-50"></i> ${track.esteira}
+                                    </div>
+                                    <div class="flex-1 relative h-full">
+                                        <div class="absolute top-2 h-6 rounded-md shadow-sm border border-white/20 text-white text-[10px] font-bold flex items-center px-2 truncate cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isForecast ? 'opacity-75 border-dashed border-slate-400' : ''}"
+                                             style="left: ${leftPos}px; width: ${Math.max(colWidth - 4, widthPx - 4)}px;"
+                                             title="${track.esteira}: ${startDate} até ${endDate} (${track.status_esteira_detalhado})"
+                                             onclick="App.openTrackEditor('${speKey}', '${track.esteira}')">
+                                            ${isForecast ? '<i class="fa-solid fa-clock mr-1"></i>' : ''} 
+                                            ${track.esteira}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        // NO DATA AVAILABLE STATE - Do not invent dates
+                        rowsHtml += `
+                            <div class="flex border-b border-dashed border-slate-200 h-10 relative z-0">
+                                <div class="w-[300px] shrink-0 p-2 pl-12 flex items-center gap-2 border-r border-slate-200 bg-white/50 sticky left-0 text-xs text-slate-400 italic">
+                                    Sem dados de esteira
+                                </div>
+                                <div class="flex-1 relative h-full flex items-center pl-4">
+                                    <span class="text-xs text-slate-300 italic">Nenhum dado analítico encontrado.</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
         });
 
-        // Add Today Line if in view
-        const todayLine = document.createElement('div');
-        todayLine.className = 'gantt-today-line';
-        const todayObj = new Date();
-        if (todayObj.getFullYear() === year && todayObj.getMonth() === month) {
-            const left = (todayObj.getDate() - 1) * colWidth + (todayObj.getHours() / 24) * colWidth;
-            todayLine.style.left = `${left}px`;
-            timeline.appendChild(todayLine);
-        }
-
-        viewport.appendChild(timeline);
+        contentContainer.innerHTML = rowsHtml;
+        viewport.appendChild(contentContainer);
         wrapper.appendChild(viewport);
         container.appendChild(wrapper);
 
-        // Auto-scroll to today
-        if (todayObj.getFullYear() === year && todayObj.getMonth() === month) {
-            setTimeout(() => {
-                const scrollPos = (todayObj.getDate() - 3) * colWidth;
-                timeline.scrollLeft = Math.max(0, scrollPos);
-            }, 100);
-        }
+        // Sync Scrolling
+        timelineHeader.style.overflow = 'hidden';
+        viewport.addEventListener('scroll', () => {
+            timelineHeader.scrollLeft = viewport.scrollLeft;
+        });
     },
-
     renderGanttBar(start, end, status, label, year, month, daysInMonth, isSub = false) {
         if (!start || !end) return '';
 
@@ -3159,12 +3388,12 @@ const App = {
         }
 
         return `
-            <div class="gantt-bar ${colorClass} ${isSub ? 'opacity-70' : ''}" 
-                 style="left: ${left}px; width: ${width}px;"
-                 title="${label} (${start} até ${end})">
-                ${isSub ? '' : `<span class="px-2 truncate">${label}</span>`}
+    <div class="gantt-bar ${colorClass} ${isSub ? 'opacity-70' : ''}"
+style = "left: ${left}px; width: ${width}px;"
+title = "${label} (${start} até ${end})" >
+    ${isSub ? '' : `<span class="px-2 truncate">${label}</span>`}
             </div>
-        `;
+    `;
     },
 
     toggleGanttRow(speName) {
@@ -3346,7 +3575,7 @@ const App = {
 
             // Mapeamento completo do modelo granular
             return {
-                id: n.id || n.task_id || `t-${index}`,
+                id: n.id || n.task_id || `t - ${index} `,
 
                 // Dados do Cliente/SPE
                 razao_social_cliente: n.razao_social_cliente || n.cliente || 'Cliente Desconhecido',
@@ -3375,8 +3604,8 @@ const App = {
                 link_pasta: n.link_pasta || '',
 
                 // Identificadores de Processo
-                process_id: n.process_id || `PROC-${index}`,
-                task_id: n.task_id || `TASK-${index}`,
+                process_id: n.process_id || `PROC - ${index} `,
+                task_id: n.task_id || `TASK - ${index} `,
 
                 // Dados da Tarefa
                 nome_tarefa: n.nome_tarefa || n.tarefa || 'Tarefa sem nome',
@@ -3475,7 +3704,7 @@ const App = {
             const parts = val.split('/');
             if (parts.length === 3) {
                 // assume DD/MM/YYYY
-                const iso = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                const iso = `${parts[2]} -${parts[1].padStart(2, '0')} -${parts[0].padStart(2, '0')} `;
                 return iso;
             }
         }
@@ -3600,15 +3829,15 @@ const App = {
                 console.error('Erro ao processar arquivo:', error);
                 msgDiv.classList.remove('hidden');
                 msgDiv.className = 'mt-4 p-3 rounded-lg text-sm bg-red-50 text-red-700';
-                msgDiv.innerHTML = `<i class="fa-solid fa-xmark mr-2"></i>Erro: ${error.message}`;
+                msgDiv.innerHTML = `< i class="fa-solid fa-xmark mr-2" ></i > Erro: ${error.message} `;
             }
         };
         reader.readAsArrayBuffer(file);
     },
 
     updateSheetIndicator(type, sheetName, data) {
-        const row = document.getElementById(`sheet-${type}`);
-        const countEl = document.getElementById(`sheet-${type}-count`);
+        const row = document.getElementById(`sheet - ${type} `);
+        const countEl = document.getElementById(`sheet - ${type} -count`);
         const icon = row.querySelector('i');
 
         if (sheetName && data?.length) {
@@ -3649,8 +3878,8 @@ const App = {
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             } catch (error) {
-                console.error(`Erro ao processar ${type}:`, error);
-                this.showToast(`Erro ao ler ${type}`, 'error');
+                console.error(`Erro ao processar ${type}: `, error);
+                this.showToast(`Erro ao ler ${type} `, 'error');
             }
         };
         reader.readAsArrayBuffer(file);
@@ -3694,7 +3923,7 @@ const App = {
             const orphanMsg = result.orphans.length > 0
                 ? ` (${result.orphans.length} registros órfãos)`
                 : '';
-            this.showToast(`Importados: ${result.stats.processos} processos, ${result.stats.tarefas} tarefas${orphanMsg}`, 'success');
+            this.showToast(`Importados: ${result.stats.processos} processos, ${result.stats.tarefas} tarefas${orphanMsg} `, 'success');
         } else {
             this.showToast('Erro na importação: ' + result.error, 'error');
         }
@@ -3740,7 +3969,7 @@ const App = {
         const map = {};
         rawData.forEach((row, idx) => {
             const n = this.normalizeKeys(row);
-            const processId = n.process_id || n.id || `PROC-${idx}`;
+            const processId = n.process_id || n.id || `PROC - ${idx} `;
 
             // Parse servicos as array (comma-separated → array)
             const servicosRaw = n.servicos_contratados || n.servicos || '';
@@ -3811,7 +4040,7 @@ const App = {
             const isOverdue = !isCompleted && dataPrevisao && today > dataPrevisao;
 
             const track = {
-                esteira_id: n.esteira_id || `EST-${idx}`,
+                esteira_id: n.esteira_id || `EST - ${idx} `,
                 process_id: processId,
                 esteira: esteiraName,
                 status_esteira_detalhado: statusEsteira,
@@ -3857,7 +4086,7 @@ const App = {
             const comentario = n.comentario_resolucao_pendencia || n.comentario || '';
 
             const task = {
-                task_id: n.task_id || n.id || `TASK-${idx}`,
+                task_id: n.task_id || n.id || `TASK - ${idx} `,
                 process_id: processId,
                 esteira: n.esteira || 'Geral',
                 nome_tarefa: n.nome_tarefa || n.tarefa || 'Tarefa sem nome',
@@ -4021,7 +4250,7 @@ const App = {
         const clientSelect = document.getElementById('client-filter');
         if (clientSelect) {
             const clients = [...new Set(this.state.data.map(d => d.razao_social_cliente).filter(Boolean))].map(c => c.trim()).sort();
-            clientSelect.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `<option value="${this.escapeAttr(c)}">${this.escapeHtml(c)}</option>`).join('');
+            clientSelect.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `< option value = "${this.escapeAttr(c)}" > ${this.escapeHtml(c)}</option > `).join('');
         }
 
         // Populate Service Filter
@@ -4029,7 +4258,7 @@ const App = {
         const serviceFilter = document.getElementById('service-filter');
         if (serviceFilter) {
             serviceFilter.innerHTML = '<option value="">Todos os Serviços</option>' +
-                services.map(s => `<option value="${this.escapeAttr(s)}" ${this.state.filterService === s ? 'selected' : ''}>${this.escapeHtml(s)}</option>`).join('');
+                services.map(s => `< option value = "${this.escapeAttr(s)}" ${this.state.filterService === s ? 'selected' : ''}> ${this.escapeHtml(s)}</option > `).join('');
         }
 
         // Populate Key Account Filter
@@ -4037,7 +4266,7 @@ const App = {
         const kaFilter = document.getElementById('ka-filter');
         if (kaFilter) {
             kaFilter.innerHTML = '<option value="">Todos os KAs</option>' +
-                kas.map(k => `<option value="${this.escapeAttr(k)}" ${this.state.filterKeyAccount === k ? 'selected' : ''}>${this.escapeHtml(k)}</option>`).join('');
+                kas.map(k => `< option value = "${this.escapeAttr(k)}" ${this.state.filterKeyAccount === k ? 'selected' : ''}> ${this.escapeHtml(k)}</option > `).join('');
         }
     },
 
@@ -4095,7 +4324,7 @@ const App = {
                 <i class="fa-solid fa-chart-pie"></i> <span>Painel Executivo</span>
             </li>
             <li id="menu-calendario" class="sidebar-menu-item" onclick="App.setView('calendario')">
-                <i class="fa-solid fa-calendar-days"></i> <span>Calendário</span>
+                <i class="fa-solid fa-calendar-days"></i> <span>Gestão de Projetos</span>
             </li>
             
             <li class="sidebar-section">OPERAÇÃO</li>
@@ -4152,7 +4381,8 @@ const App = {
                 <div class="stat-icon text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div class="stat-content"><span class="stat-value">${delayedSpes}</span><span class="stat-label">SPEs em Risco</span></div>
             </div>
-            ` : ''}
+            ` : ''
+            }
         `;
     },
 
@@ -4268,7 +4498,7 @@ const App = {
             error: 'bg-red-500',
             info: 'bg-blue-500'
         };
-        toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg z-[200] fade-in`;
+        toast.className = `fixed bottom - 4 right - 4 ${colors[type]} text - white px - 4 py - 2 rounded - lg shadow - lg z - [200] fade -in `;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
@@ -4293,42 +4523,6 @@ const App = {
     },
 
     renderDailyHistory(container) {
-        // ... (existing code for renderDailyHistory) ...
-        // Note: The actual content of renderDailyHistory is large, so I am just appending the NEW function after it.
-        // In a real multi-replace, I would need to match the end of the file or a specific function.
-        // For this specific tool usage, I will use append or insert logic if possible, or just replace the end of file / last function if I can match it clearly.
-        // However, since I cannot blindly append, I will search for where to insert.
-        // Let's insert it before the end of the App object.
-    },
-
-    // Placeholder View for Future Features
-    renderPlaceholderView(container, title, icon, description) {
-        container.innerHTML = `
-            <div class="h-full flex flex-col items-center justify-center p-8 text-center animate-fade-in">
-                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                    <i class="fa-solid ${icon} text-4xl text-slate-400"></i>
-                </div>
-                <h2 class="text-3xl font-bold text-slate-700 mb-3">${title}</h2>
-                <p class="text-slate-500 max-w-md text-lg leading-relaxed mb-8">${description}</p>
-                
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 max-w-sm w-full mx-auto flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-500 shadow-sm shrink-0">
-                        <i class="fa-solid fa-helmet-safety"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="text-xs font-bold text-indigo-800 uppercase tracking-wide">Em Desenvolvimento</p>
-                        <p class="text-xs text-indigo-600">Esta funcionalidade estará disponível na próxima versão do sistema.</p>
-                    </div>
-                </div>
-                
-                <button onclick="window.history.back()" class="mt-12 text-slate-400 hover:text-slate-600 font-semibold text-sm flex items-center gap-2 transition-colors">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar
-                </button>
-            </div>
-        `;
-    },
-
-    updateHistoryFilter(field, value) {
         const journals = this.state.journals || {};
         const allEntries = [];
 
@@ -4363,7 +4557,7 @@ const App = {
         const esteiras = [...new Set(allEntries.map(e => e.esteira).filter(Boolean))].sort();
 
         container.innerHTML = `
-            <div class="p-6 fade-in max-w-7xl mx-auto">
+    < div class="p-6 fade-in max-w-7xl mx-auto" >
                 <div class="flex items-center justify-between mb-8">
                     <div>
                         <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Central de Registros</h2>
@@ -4371,7 +4565,7 @@ const App = {
                     </div>
                 </div>
 
-                <!-- Filters -->
+                <!--Filters -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
                     <div class="flex-1 min-w-[200px]">
                         <label class="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block">Buscar no Texto</label>
@@ -4425,22 +4619,22 @@ const App = {
                     </div>
                 </div>
 
-                <!-- Table -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32 border-r border-slate-100">Data</th>
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-56 border-r border-slate-100">Operação (SPE)</th>
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-r border-slate-100">Responsável</th>
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Descrição Detalhada / Relato Situacional</th>
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-l border-slate-100">Prazo</th>
-                                    <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 text-center">Controle</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                ${filtered.map(entry => `
+                <!--Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32 border-r border-slate-100">Data</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-56 border-r border-slate-100">Operação (SPE)</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-r border-slate-100">Responsável</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Descrição Detalhada / Relato Situacional</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 border-l border-slate-100">Prazo</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-36 text-center">Controle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    ${filtered.map(entry => `
                                     <tr class="hover:bg-slate-50/50 transition-all">
                                         <td class="px-6 py-4 text-sm text-slate-500 border-r border-slate-50">${WorkingHoursEngine.formatDate(entry.date)}</td>
                                         <td class="px-6 py-4 border-r border-slate-50">
@@ -4499,12 +4693,39 @@ const App = {
                                         </td>
                                     </tr>
                                 `}
-                            </tbody>
-                        </table>
+                </tbody>
+            </table>
+        </div>
+    </div>
+            </div >
+    `;
+    },
+
+    // Placeholder View for Future Features
+    renderPlaceholderView(container, title, icon, description) {
+        container.innerHTML = `
+    < div class="h-full flex flex-col items-center justify-center p-8 text-center animate-fade-in" >
+                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <i class="fa-solid ${icon} text-4xl text-slate-400"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-700 mb-3">${title}</h2>
+                <p class="text-slate-500 max-w-md text-lg leading-relaxed mb-8">${description}</p>
+                
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 max-w-sm w-full mx-auto flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-500 shadow-sm shrink-0">
+                        <i class="fa-solid fa-helmet-safety"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-xs font-bold text-indigo-800 uppercase tracking-wide">Em Desenvolvimento</p>
+                        <p class="text-xs text-indigo-600">Esta funcionalidade estará disponível na próxima versão do sistema.</p>
                     </div>
                 </div>
-            </div>
-        `;
+                
+                <button onclick="window.history.back()" class="mt-12 text-slate-400 hover:text-slate-600 font-semibold text-sm flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                </button>
+            </div >
+    `;
     },
 
     updateHistoryFilter(field, value) {
